@@ -6,133 +6,208 @@
     <title>Sydney Holzman | Morning Brew</title>
     <meta
       name="description"
-      content="Morning Brew by Sydney Holzman, a modern home for contemplative writing, essays, and reader prompts."
+      content="Morning Brew by Sydney Holzman, an editorial home for short stories, poems, food writing, lifestyle pieces, and essays."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="page-shell">
-      <header class="hero">
+      <header class="site-header reveal">
         <nav class="nav">
-          <div class="brand">morning brew</div>
-          <a class="nav-link" href="#submit">Send a Prompt</a>
+          <a class="brand" href="#top">Morning Brew</a>
+          <div class="nav-links">
+            <a class="nav-link" href="#archive">Archive</a>
+            <a class="nav-link" href="#about">About</a>
+            <a class="nav-link" href="#submit">Submit</a>
+          </div>
         </nav>
-
-        <div class="hero-grid">
-          <section class="hero-copy reveal">
-            <p class="eyebrow">Sydney Holzman</p>
-            <h1>Morning Brew for the beautifully overthought.</h1>
-            <p class="lede">
-              A quiet, modern space for Sydney's contemplations, fragments,
-              essays, and feverish little observations shaped by the world
-              around her.
-            </p>
-            <div class="hero-actions">
-              <a class="button button-primary" href="#writing">Read the work</a>
-              <a class="button button-secondary" href="#submit">Suggest a prompt</a>
-            </div>
-          </section>
-
-          <aside class="hero-card reveal">
-            <p class="card-label">Tagline</p>
-            <h2>Morning Brew</h2>
-            <p>
-              A blog-like archive for writing that feels intimate, thoughtful,
-              and sharp. Part notebook, part literary corner, part invitation.
-            </p>
-          </aside>
-        </div>
       </header>
 
-      <main>
-        <section class="section reveal" id="about">
-          <div class="section-heading">
-            <p class="eyebrow">About</p>
-            <h2>Sydney's contemplations, fervently defined by feeling.</h2>
+      <main id="top">
+        <section class="hero reveal">
+          <div class="hero-copy">
+            <p class="eyebrow">Sydney Holzman</p>
+            <h1>Writing that lives in the details most people walk past.</h1>
+            <p class="hero-text">
+              A clean editorial home for short stories, poems, food writing,
+              lifestyle pieces, and essays that linger a little longer.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#archive">Read the archive</a>
+              <a class="button button-secondary" href="#about">Meet Sydney</a>
+            </div>
           </div>
-          <div class="about-grid">
-            <p>
-              This site is a home for creative writing that lingers a little.
-              Essays, reflections, journal-like entries, and pieces that sit
-              somewhere between story and thought.
-            </p>
-            <p>
-              The goal is simple: collect Sydney Holzman's writing in one calm,
-              beautiful place where readers can wander, read slowly, and return
-              for whatever arrives next.
-            </p>
+
+          <div class="hero-aside">
+            <figure class="portrait-card">
+              <img
+                src="assets/sydney-portrait.jpeg"
+                alt="Sydney Holzman standing on a rooftop in New York City."
+              />
+            </figure>
           </div>
         </section>
 
-        <section class="section reveal" id="writing">
+        <section class="intro-band reveal">
+          <p>
+            Sydney writes across forms, from personal essays and speeches to
+            journalism, letters, and literary work, always returning to the
+            same instinct: to pay close attention and give language to what
+            lingers.
+          </p>
+        </section>
+
+        <section class="section reveal" id="archive">
           <div class="section-heading">
-            <p class="eyebrow">Writing</p>
-            <h2>Start collecting your pieces here.</h2>
+            <p class="eyebrow">Archive</p>
+            <h2>Writing organized by form, mood, and where it first found a home.</h2>
           </div>
-          <div class="cards">
-            <article class="info-card">
-              <p class="card-label">Essay One</p>
-              <h3>
-                <a href="writing/the-shoes-we-outgrow.html">The Shoes We Outgrow</a>
-              </h3>
+
+          <div class="category-grid">
+            <section class="category-card category-card-featured">
+              <div class="category-head">
+                <p class="card-label">Featured Essay</p>
+                <h3>The Shoes We Outgrow</h3>
+              </div>
               <p>
                 On moving on and moving forward, and the strange ache of
                 realizing that growth rarely asks for permission before it
                 changes you.
               </p>
-            </article>
-            <article class="info-card">
-              <p class="card-label">Short Story</p>
-              <h3>
-                <a href="writing/where-daisies-linger.html">Where Daisies Linger</a>
-              </h3>
-              <p>
-                A short story about a man whose life revolves around death until
-                love unsettles everything he thought he understood.
-              </p>
-            </article>
-            <article class="info-card">
-              <p class="card-label">Cultural Essay</p>
-              <h3>
-                <a href="writing/how-to-lose-a-girl-in-one-crawfish-boil.html"
-                  >How To Lose A Girl in One Crawfish Boil</a
-                >
-              </h3>
-              <p>
-                Tulane men keep proving romance is temporary, but a bad
-                restaurant choice is forever.
-              </p>
-            </article>
+              <a class="text-link" href="writing/the-shoes-we-outgrow.html"
+                >Read the essay</a
+              >
+            </section>
+
+            <section class="category-card">
+              <div class="category-head">
+                <p class="card-label">Short Stories</p>
+                <h3>Fiction that leans into atmosphere, memory, and obsession.</h3>
+              </div>
+              <div class="entry-list">
+                <article class="entry-item">
+                  <a href="writing/where-daisies-linger.html">Where Daisies Linger</a>
+                  <p>
+                    A short story about a man whose life revolves around death
+                    until love unsettles everything he thought he understood.
+                  </p>
+                </article>
+              </div>
+            </section>
+
+            <section class="category-card">
+              <div class="category-head">
+                <p class="card-label">Poems</p>
+                <h3>Small, concentrated pieces still gathering their final shape.</h3>
+              </div>
+              <div class="entry-list">
+                <article class="entry-item entry-item-muted">
+                  <span>Poems coming soon</span>
+                  <p>
+                    This section will hold shorter work, fragments, lines, and
+                    pieces built more on image and rhythm.
+                  </p>
+                </article>
+              </div>
+            </section>
+
+            <section class="category-card">
+              <div class="category-head">
+                <p class="card-label">Food Pieces</p>
+                <h3>Reported, funny, and culture-forward work written for Spoon.</h3>
+              </div>
+              <div class="entry-list">
+                <article class="entry-item">
+                  <a href="writing/how-to-lose-a-girl-in-one-crawfish-boil.html"
+                    >How To Lose A Girl in One Crawfish Boil</a
+                  >
+                  <p>
+                    Tulane men keep proving romance is temporary, but a bad
+                    restaurant choice is forever.
+                  </p>
+                </article>
+              </div>
+            </section>
+
+            <section class="category-card">
+              <div class="category-head">
+                <p class="card-label">Lifestyle</p>
+                <h3>Writing for Hopelessly Yellow and other places where voice matters.</h3>
+              </div>
+              <div class="entry-list">
+                <article class="entry-item entry-item-muted">
+                  <span>Features coming soon</span>
+                  <p>
+                    Lifestyle essays, commentary, and pieces rooted in campus,
+                    culture, and the small rituals that make a life.
+                  </p>
+                </article>
+              </div>
+            </section>
           </div>
         </section>
 
-        <section class="section quote-block reveal">
-          <p class="eyebrow">Note</p>
+        <section class="section about-section reveal" id="about">
+          <div class="section-heading">
+            <p class="eyebrow">About</p>
+            <h2>A writer with an instinct to notice what stays behind.</h2>
+          </div>
+
+          <div class="about-layout">
+            <div class="about-copy">
+              <p>
+                Sydney is a writer whose work lives in the details most people
+                walk past. A senior at Tulane University and contributor to Spoon
+                University and Hopelessly Yellow, she writes across forms:
+                personal essays, speeches, journalism, letters, but the thread
+                that runs through all of it is the same: an instinct to pay
+                attention and give language to what lingers.
+              </p>
+              <p>
+                She collects the moments other people forget and turns them into
+                something worth holding onto.
+              </p>
+              <p>
+                Whether she is writing for a crowd of thousands or an audience
+                of one, her voice is warm, specific, and unmistakably hers.
+              </p>
+            </div>
+
+            <aside class="about-detail">
+              <p class="card-label">Based In</p>
+              <p>New Orleans / New York</p>
+              <p class="card-label">Writes Across</p>
+              <p>Essays, fiction, journalism, speeches, letters</p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section quote-section reveal">
           <blockquote>
-            “Writing does not always arrive loudly. Sometimes it appears like a
-            silver thought held up to morning light.”
+            “She collects the moments other people forget and turns them into
+            something worth holding onto.”
           </blockquote>
         </section>
 
-        <section class="section contact reveal" id="submit">
+        <section class="section contact-section reveal" id="submit">
           <div class="section-heading">
             <p class="eyebrow">Submit</p>
-            <h2>Send a subject, a question, or something worth writing toward.</h2>
+            <h2>Send a prompt, a question, or something that deserves a closer look.</h2>
           </div>
           <div class="contact-panel">
             <p>
-              Readers can send you ideas, prompts, memories, images, and small
-              curiosities that might turn into future work.
+              If you have a subject Sydney should write toward, a memory worth
+              revisiting, or a piece you want to share, send it here.
             </p>
             <a
               class="button button-primary"
-              href="mailto:sydwin753@gmail.com?subject=Morning%20Brew%20Prompt"
+              href="mailto:sydwin753@gmail.com?subject=Morning%20Brew%20Submission"
               >sydwin753@gmail.com</a
             >
           </div>
