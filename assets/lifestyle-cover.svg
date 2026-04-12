@@ -1,0 +1,13 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#FBFCFF"/>
+  <rect x="48" y="48" width="1104" height="804" rx="34" fill="#FFFFFF"/>
+  <rect x="755" y="132" width="250" height="164" rx="24" fill="#F4DDB0"/>
+  <rect x="782" y="163" width="196" height="22" rx="11" fill="#FFFFFF"/>
+  <rect x="782" y="202" width="128" height="22" rx="11" fill="#FFFFFF"/>
+  <path d="M208 612C273 612 309 556 363 556C422 556 462 621 531 621C605 621 656 486 747 486C811 486 861 537 927 537" stroke="#111111" stroke-width="4"/>
+  <path d="M208 665C273 665 309 609 363 609C422 609 462 674 531 674C605 674 656 539 747 539C811 539 861 590 927 590" stroke="#5E72FF" stroke-width="3"/>
+  <circle cx="322" cy="280" r="72" fill="#CFE8DF"/>
+  <circle cx="322" cy="280" r="30" fill="#FFFFFF"/>
+  <text x="112" y="150" fill="#111111" font-family="Vidaloka, serif" font-size="82">Lifestyle</text>
+  <text x="116" y="777" fill="#666666" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing="5">MORNING BREW  /  CULTURE</text>
+</svg>

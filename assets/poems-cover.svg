@@ -1,0 +1,10 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#FCFBFF"/>
+  <rect x="48" y="48" width="1104" height="804" rx="34" fill="#FFFFFF"/>
+  <circle cx="939" cy="184" r="88" fill="#F6BFD8"/>
+  <path d="M238 596C294 545 352 515 420 515C490 515 548 557 620 557C701 557 763 486 838 486C891 486 935 504 982 540" stroke="#111111" stroke-width="4"/>
+  <path d="M238 650C294 599 352 569 420 569C490 569 548 611 620 611C701 611 763 540 838 540C891 540 935 558 982 594" stroke="#8C7BFF" stroke-width="3"/>
+  <path d="M291 318C329 270 380 236 450 236C523 236 574 271 632 271C689 271 729 241 775 201" stroke="#111111" stroke-width="3"/>
+  <text x="112" y="150" fill="#111111" font-family="Vidaloka, serif" font-size="86">Poems</text>
+  <text x="116" y="777" fill="#666666" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing="5">MORNING BREW  /  VERSE</text>
+</svg>

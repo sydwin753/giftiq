@@ -181,6 +181,22 @@ blockquote {
   color: var(--ink);
 }
 
+.scroll-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: -1rem 0 2.8rem;
+}
+
+.scroll-notes p {
+  margin: 0;
+  padding: 1.15rem 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
 .archive,
 .about-section,
 .submit-section {
@@ -230,6 +246,15 @@ blockquote {
 
 .mini-image {
   aspect-ratio: 4 / 3;
+}
+
+.section-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: #f8f8ff;
 }
 
 .feature-copy h3 {
@@ -435,7 +460,8 @@ blockquote {
   .hero,
   .feature-grid,
   .about-layout,
-  .category-columns {
+  .category-columns,
+  .scroll-notes {
     grid-template-columns: 1fr;
   }
 }
