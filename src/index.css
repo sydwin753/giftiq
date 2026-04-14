@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-serif: "Playfair Display", serif;
+  
+  --color-brand-cream: #FDFCFB;
+  --color-brand-gold: #D4AF37;
+  --color-brand-slate: #2C3E50;
+  --color-brand-rose: #F5E6E8;
+  --color-brand-lavender: #F0F2F8;
+  --color-brand-luxury-gold: #C5A059;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-brand-cream);
+  color: var(--color-brand-slate);
+}
+
+.ribbon-gradient {
+  background: linear-gradient(135deg, #C5A059 0%, #D4AF37 50%, #C5A059 100%);
+}
+
+.luxury-shadow {
+  box-shadow: 0 10px 30px -10px rgba(197, 160, 89, 0.15);
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+}
+
+.luxury-card {
+  @apply bg-white rounded-[32px] border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500;
+}
+
+.luxury-input {
+  @apply w-full px-5 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-luxury-gold/20 focus:bg-white transition-all outline-none text-stone-900 placeholder:text-stone-300;
+}
+
+.luxury-button-primary {
+  @apply px-8 py-4 bg-brand-slate text-white rounded-2xl font-semibold hover:bg-stone-800 transition-all active:scale-95 shadow-lg shadow-stone-200 flex items-center justify-center gap-2;
+}
+
+.luxury-button-secondary {
+  @apply px-8 py-4 bg-white text-brand-slate border border-stone-100 rounded-2xl font-semibold hover:bg-stone-50 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2;
+}
+
+.luxury-button-gold {
+  @apply px-8 py-4 bg-brand-luxury-gold text-white rounded-2xl font-semibold hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-brand-luxury-gold/20 flex items-center justify-center gap-2;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-200 rounded-full hover:bg-stone-300 transition-colors;
+}
+

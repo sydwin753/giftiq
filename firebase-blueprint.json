@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string", "format": "uri" }
+      },
+      "required": ["name", "email"]
+    },
+    "Person": {
+      "title": "Person",
+      "description": "Profile of an important person to gift to",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "relationship": { "type": "string" },
+        "birthday": { "type": "string", "format": "date" },
+        "notes": { "type": "string" },
+        "budget": { "type": "number", "description": "Annual or per-event budget for this person" },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "dislikes": { "type": "array", "items": { "type": "string" } },
+        "sizes": { "type": "object", "additionalProperties": { "type": "string" } },
+        "favoriteBrands": { "type": "array", "items": { "type": "string" } },
+        "bio": { "type": "string", "description": "Social media bio or about page text for interest extraction" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "Occasion": {
+      "title": "Occasion",
+      "description": "A special event for a person",
+      "type": "object",
+      "properties": {
+        "personId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "type": { "type": "string", "enum": ["birthday", "anniversary", "holiday", "other"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["personId", "title", "date", "type", "ownerId"]
+    },
+    "Gift": {
+      "title": "Gift",
+      "description": "A gift that has been given",
+      "type": "object",
+      "properties": {
+        "personId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "cost": { "type": "number" },
+        "source": { "type": "string" },
+        "store": { "type": "string" },
+        "occasion": { "type": "string" },
+        "isSurprise": { "type": "boolean" },
+        "wrappingStatus": { "type": "string", "enum": ["needs_wrapping", "wrapped", "shipped", "ready"] },
+        "isRegift": { "type": "boolean" },
+        "fromPersonId": { "type": "string", "description": "Who gave this to the user originally" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["personId", "itemName", "date", "ownerId"]
+    },
+    "Idea": {
+      "title": "Idea",
+      "description": "A gift idea for a person",
+      "type": "object",
+      "properties": {
+        "personId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "buyLink": { "type": "string", "format": "uri" },
+        "store": { "type": "string" },
+        "occasion": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "purchased", "dismissed"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["personId", "itemName", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/people/{personId}": {
+      "schema": "Person",
+      "description": "People profiles"
+    },
+    "/occasions/{occasionId}": {
+      "schema": "Occasion",
+      "description": "Occasions for people"
+    },
+    "/gifts/{giftId}": {
+      "schema": "Gift",
+      "description": "Gift history"
+    },
+    "/ideas/{ideaId}": {
+      "schema": "Idea",
+      "description": "Gift ideas"
+    }
+  }
+}
