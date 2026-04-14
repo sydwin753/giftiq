@@ -3,9 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gift IQ</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#f97316">
+    <title>Giftiq | Thoughtful gifting, organized</title>
+    <meta
+      name="description"
+      content="Giftiq helps you track the people you love, save gift ideas, and plan thoughtful presents with AI support."
+    />
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#b98343">
     <link rel="apple-touch-icon" href="https://picsum.photos/seed/giftiq/192/192">
   </head>
   <body>
@@ -14,10 +18,9 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
+          navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
         });
       }
     </script>
   </body>
 </html>
-

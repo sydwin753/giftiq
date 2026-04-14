@@ -41,18 +41,6 @@ import {
   Printer,
   MessageSquare
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell 
-} from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import { identifyItem, getGiftRecommendations, extractInterestsFromBio, detectGiftConflicts, generateThankYouNote, scanReceipt, scanEmailsForGifts, extractWishlistIdeas } from './services/geminiService';
 
@@ -73,7 +61,6 @@ export default function App() {
   const [showRecommendations, setShowRecommendations] = useState<Person | null>(null);
   const [showThankYou, setShowThankYou] = useState<{ person: Person, gift: Gift } | null>(null);
   const [showGiftTag, setShowGiftTag] = useState<{ person: Person, gift: Gift } | null>(null);
-  const [scanning, setScanning] = useState(false);
   const [wishlistUrl, setWishlistUrl] = useState('');
   const [importing, setImporting] = useState(false);
 
@@ -130,6 +117,14 @@ export default function App() {
     };
   }, [user]);
 
+  const pendingIdeas = ideas.filter((idea) => idea.status === 'pending');
+  const upcomingThisMonth = occasions.filter((occasion) => {
+    const date = new Date(occasion.date);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+  const totalSpent = gifts.reduce((acc, gift) => acc + (gift.cost || 0), 0);
+
   if (loading) return (
     <div className="min-h-screen bg-brand-cream flex items-center justify-center">
       <motion.div 
@@ -144,25 +139,112 @@ export default function App() {
   );
 
   if (!user) return (
-    <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-6 text-center">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md"
-      >
-        <div className="w-24 h-24 bg-brand-rose rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-inner">
-          <GiftIcon className="w-12 h-12 text-brand-luxury-gold" />
+    <div className="min-h-screen bg-brand-cream text-brand-slate overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(197,160,89,0.15),_transparent_25%),radial-gradient(circle_at_85%_10%,_rgba(245,230,232,0.9),_transparent_20%)] pointer-events-none" />
+      <div className="relative max-w-6xl mx-auto px-6 py-8 md:px-8 md:py-10">
+        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-12">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-brand-slate rounded-[24px] flex items-center justify-center shadow-xl shadow-brand-slate/10">
+              <GiftIcon className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <p className="font-serif text-3xl tracking-tight">Giftiq</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-brand-luxury-gold font-bold">Personal gifting assistant</p>
+            </div>
+          </div>
+          <button onClick={signIn} className="luxury-button-primary md:w-auto">
+            <UserIcon className="w-5 h-5" />
+            Sign in with Google
+          </button>
+        </header>
+
+        <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-8 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <div className="space-y-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-brand-luxury-gold font-bold">Thoughtful gifting without the spiral</p>
+              <h1 className="text-5xl md:text-7xl leading-none font-serif max-w-[10ch]">
+                Gift ideas that feel personal, not panic-bought.
+              </h1>
+              <p className="text-lg text-stone-500 max-w-2xl leading-8">
+                Giftiq helps you remember what people love, plan for upcoming occasions, and turn vague gift panic into polished ideas you can actually use.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button onClick={signIn} className="luxury-button-primary">
+                <Sparkles className="w-5 h-5" />
+                Open Giftiq
+              </button>
+              <div className="luxury-button-secondary cursor-default">
+                <Calendar className="w-5 h-5" />
+                Birthdays, thank-yous, holidays, milestones
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                {
+                  title: 'Remember the details',
+                  copy: 'Track sizes, brands, dislikes, budgets, and past gifts in one place.'
+                },
+                {
+                  title: 'Get AI-backed ideas',
+                  copy: 'Generate tailored suggestions from bios, history, and occasion context.'
+                },
+                {
+                  title: 'Stay ready year-round',
+                  copy: 'Keep a running list of ideas so thoughtful gifts are easier when the date hits.'
+                }
+              ].map((feature) => (
+                <div key={feature.title} className="luxury-card p-6">
+                  <p className="text-lg font-serif mb-2">{feature.title}</p>
+                  <p className="text-sm text-stone-500 leading-6">{feature.copy}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="space-y-4"
+          >
+            <div className="glass-card rounded-[36px] p-6 md:p-8 rotate-[-2deg]">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-brand-luxury-gold font-bold mb-3">Sample prompt</p>
+              <p className="text-lg leading-8 text-brand-slate">
+                “I need a birthday gift for my older sister. Budget under $60. She likes pilates, matcha, journaling, and anything elevated but useful.”
+              </p>
+            </div>
+
+            <div className="luxury-card p-6 md:p-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-brand-luxury-gold font-bold">Giftiq suggestions</p>
+                  <p className="text-sm text-stone-400 mt-1">A stronger first impression for the app you already built.</p>
+                </div>
+                <Sparkles className="w-5 h-5 text-brand-luxury-gold" />
+              </div>
+
+              {[
+                ['Wellness reset kit', 'Matcha bowl, recovery balm, and a linen notebook.'],
+                ['Studio-to-brunch set', 'Grip socks, a sleek tumbler, and a claw clip.'],
+                ['Quiet luxury desk edit', 'Neutral journal, brass pen, and a clean candle.']
+              ].map(([title, copy], index) => (
+                <div key={title} className="rounded-[28px] border border-stone-100 bg-stone-50/70 p-5">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-stone-400 font-bold mb-2">Option 0{index + 1}</p>
+                  <h2 className="text-2xl font-serif mb-2">{title}</h2>
+                  <p className="text-sm text-stone-500 leading-6">{copy}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
-        <h1 className="text-5xl font-serif text-brand-slate mb-4">Gift IQ</h1>
-        <p className="text-stone-400 text-lg mb-12 font-light">The art of thoughtful giving, simplified.</p>
-        <button 
-          onClick={signIn}
-          className="luxury-button-primary w-full"
-        >
-          <UserIcon className="w-5 h-5" />
-          Begin Your Journey
-        </button>
-      </motion.div>
+      </div>
     </div>
   );
 
@@ -180,8 +262,8 @@ export default function App() {
             <GiftIcon className="w-6 h-6 text-white relative z-10" />
           </div>
           <div>
-            <span className="font-serif text-2xl tracking-tight block">Gift IQ</span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-brand-luxury-gold font-bold">Premium Edition</span>
+            <span className="font-serif text-2xl tracking-tight block">Giftiq</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-brand-luxury-gold font-bold">Thoughtful gifting, organized</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -208,11 +290,7 @@ export default function App() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <h2 className="text-4xl font-serif mb-2">Welcome back, {user.displayName?.split(' ')[0]}</h2>
-                  <p className="text-stone-400 font-light">You have {occasions.filter(o => {
-                    const d = new Date(o.date);
-                    const now = new Date();
-                    return d.getMonth() === now.getMonth();
-                  }).length} occasions this month.</p>
+                  <p className="text-stone-400 font-light">You have {upcomingThisMonth} occasions this month and {pendingIdeas.length} saved ideas ready to go.</p>
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setShowAddPerson(true)} className="luxury-button-secondary">
@@ -228,12 +306,12 @@ export default function App() {
 
               {/* Summary Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="luxury-card p-8">
+                  <div className="luxury-card p-8">
                   <div className="w-12 h-12 bg-stone-50 rounded-2xl flex items-center justify-center mb-6">
                     <BarChart3 className="w-6 h-6 text-brand-luxury-gold" />
                   </div>
                   <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-1">Total Investment</p>
-                  <p className="text-3xl font-serif text-brand-slate">${gifts.reduce((acc, g) => acc + (g.cost || 0), 0).toLocaleString()}</p>
+                  <p className="text-3xl font-serif text-brand-slate">${totalSpent.toLocaleString()}</p>
                 </div>
                 <div className="luxury-card p-8">
                   <div className="w-12 h-12 bg-stone-50 rounded-2xl flex items-center justify-center mb-6">
@@ -247,7 +325,7 @@ export default function App() {
                     <Lightbulb className="w-6 h-6 text-brand-luxury-gold" />
                   </div>
                   <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-1">Active Ideas</p>
-                  <p className="text-3xl font-serif text-brand-slate">{ideas.filter(i => i.status === 'pending').length}</p>
+                  <p className="text-3xl font-serif text-brand-slate">{pendingIdeas.length}</p>
                 </div>
               </div>
 
@@ -399,6 +477,10 @@ export default function App() {
                     <Mail className="w-4 h-4" />
                     Sync
                   </button>
+                  <button onClick={() => setShowReceiptScanner(true)} className="luxury-button-secondary">
+                    <Receipt className="w-4 h-4" />
+                    Scan Receipt
+                  </button>
                   <button onClick={() => setShowAddGift(true)} className="luxury-button-gold">
                     <Plus className="w-4 h-4" />
                     Record Gift
@@ -469,14 +551,42 @@ export default function App() {
                 </div>
               </div>
 
+              <div className="luxury-card p-6 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-luxury-gold mb-2">Wishlist import</p>
+                    <h3 className="text-2xl font-serif">Turn a saved list into future ideas.</h3>
+                  </div>
+                  <p className="text-sm text-stone-400 max-w-md">
+                    Paste an Amazon wishlist or shopping list link and Giftiq will pull out idea starters you can assign later.
+                  </p>
+                </div>
+                <div className="flex flex-col md:flex-row gap-3">
+                  <input
+                    value={wishlistUrl}
+                    onChange={(e) => setWishlistUrl(e.target.value)}
+                    className="luxury-input flex-1"
+                    placeholder="Paste a wishlist URL or product list..."
+                  />
+                  <button
+                    onClick={handleWishlistImport}
+                    disabled={importing || !wishlistUrl}
+                    className="luxury-button-gold md:w-auto disabled:opacity-50"
+                  >
+                    {importing ? <Sparkles className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Import ideas
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {ideas.filter(i => i.status === 'pending').length === 0 ? (
+                {pendingIdeas.length === 0 ? (
                   <div className="col-span-full text-center py-24 bg-stone-50 rounded-[40px] border border-dashed border-stone-200">
                     <Lightbulb className="w-16 h-16 text-stone-200 mx-auto mb-6" />
                     <p className="text-stone-400 text-lg font-light">No ideas saved yet. Start exploring!</p>
                   </div>
                 ) : (
-                  ideas.filter(i => i.status === 'pending').map(idea => {
+                  pendingIdeas.map(idea => {
                     const person = people.find(p => p.id === idea.personId);
                     return (
                       <div key={idea.id} className="luxury-card overflow-hidden group">
@@ -599,227 +709,6 @@ export default function App() {
                         </div>
                       );
                     })
-                )}
-              </div>
-            </motion.div>
-          )}
-          {activeTab === 'dashboard' && (
-            <motion.div 
-              key="dashboard"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <h2 className="text-2xl font-display text-purple-900 mb-6">Spending Dashboard</h2>
-              
-              <div className="grid gap-6">
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-[32px] border border-purple-100 shadow-sm">
-                    <p className="text-xs font-bold uppercase tracking-widest text-purple-300 mb-1">Total Spent</p>
-                    <p className="text-2xl font-display text-purple-900">${gifts.reduce((acc, g) => acc + (g.cost || 0), 0).toFixed(2)}</p>
-                  </div>
-                  <div className="bg-white p-6 rounded-[32px] border border-purple-100 shadow-sm">
-                    <p className="text-xs font-bold uppercase tracking-widest text-purple-300 mb-1">Gifts Given</p>
-                    <p className="text-2xl font-display text-purple-900">{gifts.length}</p>
-                  </div>
-                </div>
-
-                {/* Upcoming Birthdays & AI Suggestions */}
-                <div className="bg-white p-6 rounded-[40px] border border-purple-100 shadow-sm">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6">Upcoming Birthdays</h3>
-                  <div className="grid gap-4">
-                    {people
-                      .filter(p => p.birthday)
-                      .sort((a, b) => {
-                        const today = new Date();
-                        const nextA = new Date(a.birthday!);
-                        nextA.setFullYear(today.getFullYear());
-                        if (nextA < today) nextA.setFullYear(today.getFullYear() + 1);
-                        const nextB = new Date(b.birthday!);
-                        nextB.setFullYear(today.getFullYear());
-                        if (nextB < today) nextB.setFullYear(today.getFullYear() + 1);
-                        return nextA.getTime() - nextB.getTime();
-                      })
-                      .slice(0, 3)
-                      .map(person => (
-                        <div key={person.id} className="p-4 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
-                          <div>
-                            <p className="font-bold text-purple-900">{person.name}</p>
-                            <p className="text-xs text-pink-500 font-medium">{person.birthday}</p>
-                          </div>
-                          <button 
-                            onClick={() => {
-                              setSelectedPerson(person);
-                              setActiveTab('people');
-                            }}
-                            className="p-2 bg-white text-pink-500 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Spending by Person Chart */}
-                <div className="bg-white p-6 rounded-[40px] border border-purple-100 shadow-sm h-80">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6">Spending by Person</h3>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={people.map(p => ({
-                      name: p.name,
-                      spent: gifts.filter(g => g.personId === p.id).reduce((acc, g) => acc + (g.cost || 0), 0)
-                    })).filter(d => d.spent > 0)}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e8ff" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a855f7', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a855f7', fontSize: 12 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f3e8ff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        itemStyle={{ color: '#9333ea', fontWeight: 'bold' }}
-                      />
-                      <Bar dataKey="spent" fill="#9333ea" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Spending by Year Chart */}
-                <div className="bg-white p-6 rounded-[40px] border border-purple-100 shadow-sm h-80">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6">Spending by Year</h3>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={Object.entries(gifts.reduce((acc, g) => {
-                      const year = new Date(g.date).getFullYear();
-                      acc[year] = (acc[year] || 0) + (g.cost || 0);
-                      return acc;
-                    }, {} as Record<number, number>)).map(([year, spent]) => ({ year, spent }))}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e8ff" />
-                      <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#ec4899', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#ec4899', fontSize: 12 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f3e8ff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        itemStyle={{ color: '#db2777', fontWeight: 'bold' }}
-                      />
-                      <Bar dataKey="spent" fill="#ec4899" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Gift Season Planner */}
-                <div className="bg-white p-6 rounded-[40px] border border-purple-100 shadow-sm">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6">Gift Season Planner</h3>
-                  <div className="grid gap-4">
-                    {people.map(person => {
-                      const spent = gifts.filter(g => g.personId === person.id).reduce((acc, g) => acc + (g.cost || 0), 0);
-                      const budget = person.budget || 0;
-                      const percent = budget > 0 ? (spent / budget) * 100 : 0;
-                      
-                      return (
-                        <div key={person.id} className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-bold text-purple-900">{person.name}</span>
-                            <span className="text-xs font-bold text-purple-400">${spent.toFixed(0)} / ${budget.toFixed(0)}</span>
-                          </div>
-                          <div className="h-2 bg-white rounded-full overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(percent, 100)}%` }}
-                              className={`h-full ${percent > 100 ? 'bg-red-400' : 'bg-purple-500'}`}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          {activeTab === 'ideas' && (
-            <motion.div 
-              key="ideas"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-display text-purple-900">Gift Ideas</h2>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setShowScanner(true)}
-                    className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100"
-                  >
-                    <Camera className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={() => setShowAddGift(true)}
-                    className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-100"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Wishlist Import */}
-              <div className="mb-8 p-6 bg-white rounded-[40px] border border-purple-100 shadow-sm">
-                <label className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-2 block">Import Wishlist</label>
-                <div className="flex gap-2">
-                  <input 
-                    value={wishlistUrl}
-                    onChange={e => setWishlistUrl(e.target.value)}
-                    className="flex-1 p-3 bg-purple-50 border border-purple-100 rounded-xl text-sm focus:outline-none focus:border-purple-500"
-                    placeholder="Paste Amazon wishlist link..."
-                  />
-                  <button 
-                    onClick={handleWishlistImport}
-                    disabled={importing || !wishlistUrl}
-                    className="p-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {importing ? <Sparkles className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                {ideas.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-[40px] border border-purple-100 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 ribbon-gradient" />
-                    <Lightbulb className="w-12 h-12 text-purple-200 mx-auto mb-4" />
-                    <p className="text-purple-400">No ideas saved yet.</p>
-                  </div>
-                ) : (
-                  ideas.filter(i => i.status === 'pending').map(idea => {
-                    const person = people.find(p => p.id === idea.personId);
-                    return (
-                      <div key={idea.id} className="bg-white p-6 rounded-[32px] border border-purple-100 flex items-center justify-between shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
-                        <div>
-                          <h3 className="font-bold text-purple-900">{idea.itemName}</h3>
-                          <p className="text-sm text-purple-400">For {person?.name || 'Unknown'}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={async () => {
-                              await updateDoc(doc(db, 'ideas', idea.id), { status: 'purchased' });
-                              await addDoc(collection(db, 'gifts'), {
-                                personId: idea.personId,
-                                itemName: idea.itemName,
-                                date: new Date().toISOString().split('T')[0],
-                                ownerId: user.uid
-                              });
-                            }}
-                            className="p-3 bg-green-50 text-green-600 rounded-2xl hover:bg-green-100 transition-colors"
-                          >
-                            <Check className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => deleteDoc(doc(db, 'ideas', idea.id))}
-                            className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-100 transition-colors"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
                 )}
               </div>
             </motion.div>

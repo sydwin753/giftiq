@@ -1,5 +1,5 @@
 {
-  "name": "Gift IQ",
-  "description": "Smart gift tracking and ideas. Manage profiles for loved ones, track gift history, scan items for ideas, and sync with your email for order confirmations.",
+  "name": "Giftiq",
+  "description": "Thoughtful gift planning with people profiles, AI recommendations, saved ideas, email sync, and receipt scanning.",
   "requestFramePermissions": ["camera"]
 }
