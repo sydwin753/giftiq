@@ -1,27 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-serif: "Playfair Display", serif;
   
-  --color-brand-cream: #fffaf4;
-  --color-brand-gold: #d0a35b;
-  --color-brand-slate: #281f1b;
-  --color-brand-rose: #f4e2db;
-  --color-brand-lavender: #f3ede3;
-  --color-brand-luxury-gold: #b98343;
+  --color-brand-cream: #FFFBFC;
+  --color-brand-gold: #D4AF37;
+  --color-brand-slate: #2D1B33;
+  --color-brand-pink: #FCE4EC;
+  --color-brand-purple: #F3E5F5;
+  --color-brand-blue: #E3F2FD;
+  --color-brand-deep-purple: #4A148C;
+  --color-brand-deep-blue: #1565C0;
+  --color-brand-luxury-gold: #C5A059;
+  --color-brand-pastel-gold: #FFF8E1;
 }
 
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background:
-    radial-gradient(circle at top left, rgba(208, 163, 91, 0.16), transparent 24%),
-    radial-gradient(circle at 85% 10%, rgba(244, 226, 219, 0.95), transparent 20%),
-    linear-gradient(180deg, #fffaf4 0%, #f7efe3 100%);
+  background-color: var(--color-brand-cream);
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(328,100%,98%,1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(272,100%,98%,1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(200,100%,98%,1) 0, transparent 50%);
   color: var(--color-brand-slate);
 }
 
@@ -34,23 +39,23 @@ body {
 }
 
 .glass-card {
-  @apply bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl shadow-stone-200/60;
+  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
 }
 
 .luxury-card {
-  @apply bg-white/90 rounded-[32px] border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500;
+  @apply bg-white/80 backdrop-blur-sm rounded-[32px] border border-pink-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500;
 }
 
 .luxury-input {
-  @apply w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-brand-luxury-gold/20 focus:border-brand-luxury-gold/30 focus:bg-white transition-all outline-none text-stone-900 placeholder:text-stone-300;
+  @apply w-full px-5 py-4 bg-purple-50/50 border-none rounded-2xl focus:ring-2 focus:ring-brand-luxury-gold/20 focus:bg-white transition-all outline-none text-stone-900 placeholder:text-purple-200;
 }
 
 .luxury-button-primary {
-  @apply px-8 py-4 bg-brand-slate text-white rounded-2xl font-semibold hover:bg-stone-800 transition-all active:scale-95 shadow-lg shadow-stone-300/50 flex items-center justify-center gap-2;
+  @apply px-8 py-4 bg-brand-deep-purple text-white rounded-2xl font-semibold hover:bg-purple-900 transition-all active:scale-95 shadow-lg shadow-purple-100 flex items-center justify-center gap-2;
 }
 
 .luxury-button-secondary {
-  @apply px-8 py-4 bg-white text-brand-slate border border-stone-200 rounded-2xl font-semibold hover:bg-stone-50 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2;
+  @apply px-8 py-4 bg-white text-brand-deep-purple border border-purple-50 rounded-2xl font-semibold hover:bg-purple-50 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2;
 }
 
 .luxury-button-gold {
@@ -69,3 +74,4 @@ body {
 ::-webkit-scrollbar-thumb {
   @apply bg-stone-200 rounded-full hover:bg-stone-300 transition-colors;
 }
+

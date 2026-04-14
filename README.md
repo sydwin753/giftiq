@@ -1,33 +1,20 @@
-# Giftiq
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-Giftiq is a React + Vite gift-planning app that helps you remember what people love, save ideas, track gift history, and generate suggestions with Gemini.
+# Run and deploy your AI Studio app
 
-## Local development
+This contains everything you need to run your app locally.
 
-1. Install dependencies with `npm install`
-2. Create `.env.local` and set `GEMINI_API_KEY=your_key_here`
-3. Run `npm run dev`
+View your app in AI Studio: https://ai.studio/apps/6c458226-8a4c-42c7-ab4e-55a2c19a67bd
 
-## Main features
+## Run Locally
 
-- Rich signed-out landing experience
-- Google sign-in with Firebase Auth
-- People profiles with extracted interests and sizes
-- Gift history, upcoming occasions, and saved ideas
-- AI recommendations, receipt scanning, and email parsing helpers
+**Prerequisites:**  Node.js
 
-## GitHub Pages
 
-This repo includes a Pages workflow in `.github/workflows/pages.yml`.
-
-To publish:
-
-1. Add a repository secret named `GEMINI_API_KEY`
-2. In GitHub, open `Settings -> Pages`
-3. Set the source to `GitHub Actions`
-4. Push your branch or merge to the branch you want to deploy from
-
-## Notes
-
-- Firebase auth domains must include your GitHub Pages URL if you want Google sign-in to work there
-- AI-powered features need the `GEMINI_API_KEY` secret available at build time
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

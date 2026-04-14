@@ -1,6 +1,6 @@
 {
-  "short_name": "Giftiq",
-  "name": "Giftiq: Thoughtful Gift Planning",
+  "short_name": "Gift IQ",
+  "name": "Gift IQ: Smart Gift Tracking",
   "icons": [
     {
       "src": "https://picsum.photos/seed/giftiq/192/192",
@@ -15,6 +15,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#b98343",
-  "background_color": "#fffaf4"
+  "theme_color": "#f97316",
+  "background_color": "#fafaf9"
 }
