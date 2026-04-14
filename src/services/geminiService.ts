@@ -1,8 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    // Fallback to a dummy key to prevent crash on initialization if key is missing
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || 'AIzaSy-dummy-key-for-initialization' });
+  }
+  return aiInstance;
+}
 
 export async function identifyItem(base64Image: string) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = "Identify the main item in this image. Provide a short name (max 5 words) and a brief description (max 20 words). Format as JSON: { \"name\": \"...\", \"description\": \"...\" }";
   
@@ -23,6 +33,7 @@ export async function identifyItem(base64Image: string) {
 }
 
 export async function scanEmailsForGifts(emails: string[]) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Analyze these email snippets and identify potential gift order confirmations. For each, provide the item name, date, cost, and retailer. Format as JSON array: [{ "itemName": "...", "date": "...", "cost": 0.0, "retailer": "..." }]`;
   
@@ -38,6 +49,7 @@ export async function scanEmailsForGifts(emails: string[]) {
 }
 
 export async function getGiftRecommendations(personProfile: any, pastGifts: any[], budget?: number) {
+  const ai = getAI();
   const model = "gemini-3.1-pro-preview";
   const prompt = `Suggest 5 personalized gift ideas for this person:
     Profile: ${JSON.stringify(personProfile)}
@@ -72,6 +84,7 @@ export async function getGiftRecommendations(personProfile: any, pastGifts: any[
 }
 
 export async function extractInterestsFromBio(bio: string) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Extract a detailed profile from this text: "${bio}". 
     Identify interests, dislikes, favorite brands, and clothing/shoe sizes if mentioned. 
@@ -98,6 +111,7 @@ export async function extractInterestsFromBio(bio: string) {
 }
 
 export async function detectGiftConflicts(newItemName: string, pastGifts: any[]) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Check if "${newItemName}" is too similar to any of these past gifts: ${JSON.stringify(pastGifts)}. 
     Return a warning message if it is, or null if it's unique.`;
@@ -121,6 +135,7 @@ export async function detectGiftConflicts(newItemName: string, pastGifts: any[])
 }
 
 export async function generateThankYouNote(personName: string, giftName: string, relationship: string) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Generate a warm, personalized thank-you note for ${personName} who gave me a ${giftName}. Our relationship is: ${relationship}.`;
 
@@ -133,6 +148,7 @@ export async function generateThankYouNote(personName: string, giftName: string,
 }
 
 export async function scanReceipt(base64Image: string) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = "Extract items and prices from this receipt image.";
 
@@ -164,6 +180,7 @@ export async function scanReceipt(base64Image: string) {
 }
 
 export async function extractWishlistIdeas(wishlistUrl: string) {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Extract gift ideas from this wishlist link or text: "${wishlistUrl}". Return a JSON array of objects with itemName and description.`;
   

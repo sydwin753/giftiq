@@ -56,6 +56,45 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { identifyItem, getGiftRecommendations, extractInterestsFromBio, detectGiftConflicts, generateThankYouNote, scanReceipt, scanEmailsForGifts, extractWishlistIdeas } from './services/geminiService';
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4">
+          <div className="max-w-md w-full bg-white p-8 rounded-[40px] shadow-xl border border-red-100">
+            <h1 className="text-2xl font-serif text-red-600 mb-4">Something went wrong</h1>
+            <p className="text-stone-600 mb-6 font-light">The application encountered an error. Please try refreshing the page.</p>
+            <pre className="bg-stone-50 p-4 rounded-2xl text-xs overflow-auto max-h-40 text-stone-400 mb-6">
+              {this.state.error?.message || String(this.state.error)}
+            </pre>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-4 bg-stone-900 text-white rounded-2xl font-medium hover:bg-stone-800 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +183,8 @@ export default function App() {
   );
 
   if (!user) return (
-    <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-pink/40 rounded-full blur-[100px]" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-purple/40 rounded-full blur-[100px]" />
@@ -169,10 +209,12 @@ export default function App() {
         </button>
       </motion.div>
     </div>
+    </ErrorBoundary>
   );
 
   return (
-    <div className="min-h-screen bg-brand-cream text-brand-slate pb-24 relative overflow-hidden">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-brand-cream text-brand-slate pb-24 relative overflow-hidden">
       {/* Decorative Elements */}
       <div className="fixed -top-20 -left-20 w-80 h-80 bg-brand-pink/30 rounded-full blur-[100px] pointer-events-none" />
       <div className="fixed -bottom-20 -right-20 w-80 h-80 bg-brand-purple/50 rounded-full blur-[100px] pointer-events-none" />
@@ -205,7 +247,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div 
-              key="dashboard"
+              key="spending-dashboard"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -964,6 +1006,7 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </ErrorBoundary>
   );
 }
 
