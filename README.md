@@ -1,16 +1,17 @@
-# firsttry
+# Giftiq
 
-Simple custom website starter for your personal domain.
+Launch-ready static landing page for `Giftiq`, a gift recommendation app concept.
 
-## Files
+## What is in this repo
 
-- `index.html` contains the page structure and placeholder copy.
-- `styles.css` contains the visual design and responsive layout.
-- `script.js` adds the page reveal animation.
+- `index.html` is the public homepage and product story
+- `styles.css` contains the full visual system and responsive layout
+- `script.js` powers reveal animations and the interactive gift demo
+- `.github/workflows/pages.yml` deploys the site to GitHub Pages
 
-## Open locally
+## Run locally
 
-Open `index.html` in a browser, or run a simple local server:
+Open `index.html` directly, or start a simple local server:
 
 ```bash
 python3 -m http.server 8000
@@ -18,15 +19,18 @@ python3 -m http.server 8000
 
 Then visit `http://localhost:8000`.
 
-## Next edits to make
+## Publish on GitHub Pages
 
-- Replace `myname.com` with your real domain.
-- Update the text with your real name, bio, and services.
-- Change `hello@myname.com` to your real contact email.
-- Add links to your Instagram, portfolio, or booking page.
+1. Push this repo to GitHub.
+2. In GitHub, open `Settings -> Pages`.
+3. Set the source to `GitHub Actions`.
+4. Push to `main` again if Pages has not built yet.
 
-## Publishing ideas
+The included workflow will publish the site automatically.
 
-- GitHub Pages
-- Netlify
-- Vercel
+## Before you go live
+
+- Update `CNAME` if you are not using `sydneyholzman.com`
+- Replace `hello@giftiq.app` with your real contact or waitlist link
+- Add real app screenshots, product links, or beta signup destination
+- Tighten the homepage copy once your positioning is final
