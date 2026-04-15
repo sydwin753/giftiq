@@ -11,7 +11,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db, signIn, logOut } from './firebase';
+import { auth, completeRedirectSignIn, db, getFriendlyAuthError, logOut, signIn } from './firebase';
 import { Person, Gift, Idea, Occasion } from './types';
 import confetti from 'canvas-confetti';
 import { 
@@ -115,6 +115,8 @@ export default function App() {
   const [scanning, setScanning] = useState(false);
   const [wishlistUrl, setWishlistUrl] = useState('');
   const [importing, setImporting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [signingIn, setSigningIn] = useState(false);
 
   const handleWishlistImport = async () => {
     if (!wishlistUrl) return;
@@ -131,12 +133,34 @@ export default function App() {
   };
 
   useEffect(() => {
+    completeRedirectSignIn().catch((error) => {
+      console.error('Redirect sign-in failed:', error);
+      setAuthError(getFriendlyAuthError(error));
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  const handleSignIn = async () => {
+    setSigningIn(true);
+    setAuthError(null);
+
+    try {
+      const result = await signIn();
+      if (result.mode === 'redirect') {
+        setAuthError('Redirecting you to Google sign-in. If you come back here, wait a moment for the login to finish.');
+      }
+    } catch (error) {
+      console.error('Sign-in failed:', error);
+      setAuthError(getFriendlyAuthError(error));
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -201,12 +225,21 @@ export default function App() {
         <h1 className="text-5xl font-serif text-brand-deep-purple mb-4">Gift IQ</h1>
         <p className="text-stone-400 text-lg mb-12 font-light">The art of thoughtful giving, simplified.</p>
         <button 
-          onClick={signIn}
-          className="luxury-button-primary w-full"
+          onClick={handleSignIn}
+          disabled={signingIn}
+          className="luxury-button-primary w-full disabled:opacity-70"
         >
           <UserIcon className="w-5 h-5" />
-          Begin Your Journey
+          {signingIn ? 'Opening Google sign-in...' : 'Begin Your Journey'}
         </button>
+        {authError && (
+          <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/90 p-4 text-left">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm leading-6 text-amber-800">{authError}</p>
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
     </ErrorBoundary>
