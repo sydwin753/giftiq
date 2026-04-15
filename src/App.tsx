@@ -707,12 +707,17 @@ export default function App() {
                       return (
                         <div key={occasion.id} className={`luxury-card p-8 flex items-center justify-between ${!isUpcoming ? 'opacity-50 grayscale' : ''}`}>
                           <div className="flex items-center gap-6">
-                            <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl font-serif ${
+                            <div className={`w-16 h-16 rounded-[24px] flex flex-col items-center justify-center ${
                               occasion.type === 'birthday' ? 'bg-pink-50 text-pink-400' :
                               occasion.type === 'anniversary' ? 'bg-purple-50 text-brand-deep-purple' :
                               'bg-blue-50 text-brand-deep-blue'
                             }`}>
-                              {new Date(occasion.date).getDate()}
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">
+                                {new Date(occasion.date).toLocaleDateString('en-US', { month: 'short' })}
+                              </span>
+                              <span className="text-2xl font-serif leading-none">
+                                {new Date(occasion.date).getDate()}
+                              </span>
                             </div>
                             <div>
                               <h3 className="text-xl font-bold text-brand-slate mb-1">{occasion.title}</h3>
