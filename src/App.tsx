@@ -54,7 +54,7 @@ import {
   Cell 
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
-import { identifyItem, getGiftRecommendations, extractInterestsFromBio, detectGiftConflicts, generateThankYouNote, scanReceipt, scanEmailsForGifts, extractWishlistIdeas } from './services/geminiService';
+import { identifyItem, getGiftRecommendations, extractInterestsFromBio, detectGiftConflicts, generateCardNote, scanReceipt, scanEmailsForGifts, extractWishlistIdeas } from './services/geminiService';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -144,6 +144,7 @@ export default function App() {
   const [showScanner, setShowScanner] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState<Person | null>(null);
   const [showThankYou, setShowThankYou] = useState<{ person: Person, gift: Gift } | null>(null);
+  const [showBirthdayCard, setShowBirthdayCard] = useState<Person | null>(null);
   const [showGiftTag, setShowGiftTag] = useState<{ person: Person, gift: Gift } | null>(null);
   const [scanning, setScanning] = useState(false);
   const [wishlistUrl, setWishlistUrl] = useState('');
@@ -829,15 +830,23 @@ export default function App() {
                               })()}
                             </p>
                           </div>
-                          <button 
-                            onClick={() => {
-                              setSelectedPerson(person);
-                              setActiveTab('people');
-                            }}
-                            className="p-2 bg-white text-pink-500 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setShowBirthdayCard(person)}
+                              className="px-3 py-2 bg-white text-pink-500 rounded-xl shadow-sm hover:shadow-md transition-shadow text-[10px] font-bold uppercase tracking-widest"
+                            >
+                              Write Card
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setSelectedPerson(person);
+                                setActiveTab('people');
+                              }}
+                              className="p-2 bg-white text-pink-500 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                   </div>
@@ -1062,6 +1071,7 @@ export default function App() {
               onEdit={(person) => setEditingPerson(person)}
               onShowRecs={(p) => setShowRecommendations(p)}
               onShowThankYou={(p, g) => setShowThankYou({ person: p, gift: g })}
+              onShowBirthdayCard={(person) => setShowBirthdayCard(person)}
               onShowGiftTag={(p, g) => setShowGiftTag({ person: p, gift: g })}
             />
           </Modal>
@@ -1121,12 +1131,28 @@ export default function App() {
 
         {showThankYou && (
           <Modal onClose={() => setShowThankYou(null)} title="Thank You Note">
-            <ThankYouDraft 
+            <CardDraft 
               person={showThankYou.person}
-              gift={showThankYou.gift}
+              occasionLabel="Thank You Note"
+              subject={showThankYou.gift.itemName}
+              occasionValue={showThankYou.gift.occasion || 'Thank You'}
               noteHistory={cardNotes.filter((note) => note.personId === showThankYou.person.id)}
               userId={user.uid}
               onClose={() => setShowThankYou(null)}
+            />
+          </Modal>
+        )}
+
+        {showBirthdayCard && (
+          <Modal onClose={() => setShowBirthdayCard(null)} title="Birthday Card">
+            <CardDraft
+              person={showBirthdayCard}
+              occasionLabel="Birthday Card"
+              subject={`${showBirthdayCard.name}'s birthday`}
+              occasionValue="Birthday"
+              noteHistory={cardNotes.filter((note) => note.personId === showBirthdayCard.id)}
+              userId={user.uid}
+              onClose={() => setShowBirthdayCard(null)}
             />
           </Modal>
         )}
@@ -1208,6 +1234,7 @@ function AddPersonForm({
   const [relationship, setRelationship] = useState(existingPerson?.relationship || '');
   const [birthday, setBirthday] = useState(existingPerson?.birthday || '');
   const [budget, setBudget] = useState(existingPerson?.budget ? String(existingPerson.budget) : '');
+  const [notes, setNotes] = useState(existingPerson?.notes || '');
   const [bio, setBio] = useState(existingPerson?.bio || '');
   const [interests, setInterests] = useState<string[]>(existingPerson?.interests || []);
   const [dislikes, setDislikes] = useState<string[]>(existingPerson?.dislikes || []);
@@ -1238,6 +1265,7 @@ function AddPersonForm({
       relationship,
       birthday,
       budget: parseFloat(budget) || 0,
+      notes,
       bio,
       interests,
       dislikes,
@@ -1315,6 +1343,16 @@ function AddPersonForm({
         </div>
       </div>
 
+      <div className="space-y-4">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-brand-luxury-gold">Card Writing Memory</label>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Add reminders for future cards: tone, inside jokes, family phrasing, things you already said, or details to mention on birthdays."
+          className="luxury-input min-h-[120px] resize-none"
+        />
+      </div>
+
       {(interests.length > 0 || brands.length > 0) && (
         <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 space-y-6">
           <p className="text-xs font-bold text-brand-slate uppercase tracking-widest">Extracted Insights</p>
@@ -1354,6 +1392,7 @@ function PersonDetail({
   onEdit,
   onShowRecs,
   onShowThankYou,
+  onShowBirthdayCard,
   onShowGiftTag
 }: {
   person: Person,
@@ -1363,6 +1402,7 @@ function PersonDetail({
   onEdit: (p: Person) => void,
   onShowRecs: (p: Person) => void,
   onShowThankYou: (p: Person, g: Gift) => void,
+  onShowBirthdayCard: (p: Person) => void,
   onShowGiftTag: (p: Person, g: Gift) => void
 }) {
   const spent = gifts.reduce((acc, g) => acc + (g.cost || 0), 0);
@@ -1486,6 +1526,13 @@ function PersonDetail({
               <Sparkles className="w-5 h-5" />
               Get AI Recommendations
             </button>
+            <button
+              onClick={() => onShowBirthdayCard(person)}
+              className="luxury-button-secondary w-full justify-start"
+            >
+              <MessageSquare className="w-5 h-5" />
+              Write Birthday Card
+            </button>
             <button className="luxury-button-secondary w-full justify-start">
               <Plus className="w-5 h-5" />
               Add Gift Idea
@@ -1493,6 +1540,13 @@ function PersonDetail({
           </div>
         </div>
       </div>
+
+      {person.notes && (
+        <div className="rounded-[32px] border border-stone-100 bg-stone-50 p-6">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">Card Writing Memory</p>
+          <p className="text-sm leading-6 text-stone-600">{person.notes}</p>
+        </div>
+      )}
 
       {/* Gift History Timeline */}
       <div className="space-y-6 pt-6 border-t border-stone-100">
@@ -2030,15 +2084,19 @@ function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Per
   );
 }
 
-function ThankYouDraft({
+function CardDraft({
   person,
-  gift,
+  subject,
+  occasionLabel,
+  occasionValue,
   noteHistory,
   userId,
   onClose
 }: {
   person: Person,
-  gift: Gift,
+  subject: string,
+  occasionLabel: string,
+  occasionValue: string,
   noteHistory: CardNote[],
   userId: string,
   onClose: () => void
@@ -2059,28 +2117,33 @@ function ThankYouDraft({
     })
     .slice(0, 3);
 
+  const matchingOccasionNotes = recentNotes.filter((entry) =>
+    (entry.occasion || '').toLowerCase().includes(occasionValue.toLowerCase())
+  );
+  const featuredPreviousNote = matchingOccasionNotes[0] || recentNotes[0];
+
   useEffect(() => {
-    generateThankYouNote(
+    generateCardNote(
       person.name,
-      gift.itemName,
       person.relationship,
-      recentNotes.map((entry) => entry.content)
+      occasionLabel,
+      subject,
+      recentNotes.map((entry) => entry.content),
+      person.notes
     )
       .then(setNote)
       .finally(() => setLoading(false));
-  }, [gift.itemName, person.name, person.relationship]);
+  }, [occasionLabel, person.name, person.notes, person.relationship, subject]);
 
   const handleCopyAndSave = async () => {
     setSaving(true);
     try {
       await navigator.clipboard.writeText(note);
-      const latestNote = recentNotes[0];
-      if (!latestNote || latestNote.content !== note || latestNote.giftId !== gift.id) {
+      if (!featuredPreviousNote || featuredPreviousNote.content !== note) {
         await addDoc(collection(db, 'cardNotes'), {
           personId: person.id,
-          giftId: gift.id,
           content: note,
-          occasion: gift.occasion || 'General',
+          occasion: occasionValue,
           ownerId: userId,
           createdAt: serverTimestamp()
         });
@@ -2094,16 +2157,24 @@ function ThankYouDraft({
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-12 gap-4">
       <MessageSquare className="w-12 h-12 text-blue-400 animate-pulse" />
-      <p className="text-blue-400 font-medium animate-pulse">Drafting a warm message...</p>
+      <p className="text-blue-400 font-medium animate-pulse">Drafting your {occasionLabel.toLowerCase()}...</p>
     </div>
   );
 
   return (
     <div className="grid gap-6">
-      {recentNotes.length > 0 && (
+      {person.notes && (
+        <div className="rounded-3xl border border-stone-200 bg-white p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400 mb-2">Saved card-writing guidance</p>
+          <p className="text-sm leading-6 text-stone-600">{person.notes}</p>
+        </div>
+      )}
+      {featuredPreviousNote && (
         <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400 mb-2">Last card note to {person.name}</p>
-          <p className="text-sm leading-6 text-stone-600 italic">{recentNotes[0].content}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400 mb-2">
+            {matchingOccasionNotes[0] ? `Last ${occasionLabel.toLowerCase()} for ${person.name}` : `Last card note to ${person.name}`}
+          </p>
+          <p className="text-sm leading-6 text-stone-600 italic">{featuredPreviousNote.content}</p>
         </div>
       )}
       <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl text-blue-900 leading-relaxed whitespace-pre-wrap italic">

@@ -388,17 +388,21 @@ export async function detectGiftConflicts(newItemName: string, pastGifts: any[])
   return JSON.parse(response.text);
 }
 
-export async function generateThankYouNote(
+export async function generateCardNote(
   personName: string,
-  giftName: string,
   relationship: string,
-  previousNotes: string[] = []
+  occasionLabel: string,
+  subject: string,
+  previousNotes: string[] = [],
+  styleNotes?: string
 ) {
   const ai = getAI();
   const model = "gemini-3-flash-preview";
-  const prompt = `Generate a warm, personalized card note for ${personName} about ${giftName}. Our relationship is ${relationship}.
+  const prompt = `Generate a warm, personalized ${occasionLabel.toLowerCase()} card note for ${personName}. Our relationship is ${relationship}.
+  The card is for: ${subject}.
   
   Keep it heartfelt, specific, and concise enough to fit naturally in a card.
+  ${styleNotes ? `Personal card-writing guidance for this person: ${styleNotes}` : 'No extra card-writing guidance is available.'}
   Do not repeat wording, structure, or standout phrases from these previous notes to the same person:
   ${previousNotes.length > 0 ? previousNotes.map((note, index) => `${index + 1}. ${note}`).join('\n') : 'No previous notes available.'}
   
@@ -410,6 +414,23 @@ export async function generateThankYouNote(
   });
 
   return response.text;
+}
+
+export async function generateThankYouNote(
+  personName: string,
+  giftName: string,
+  relationship: string,
+  previousNotes: string[] = [],
+  styleNotes?: string
+) {
+  return generateCardNote(
+    personName,
+    relationship,
+    'thank-you',
+    giftName,
+    previousNotes,
+    styleNotes
+  );
 }
 
 export async function scanReceipt(base64Image: string) {
