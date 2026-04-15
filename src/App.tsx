@@ -225,6 +225,19 @@ export default function App() {
     ...syncedBirthdayOccasions
   ];
 
+  const getTurningAge = (person?: Person, targetDate?: string) => {
+    if (!person?.birthday || !targetDate) return null;
+
+    const birthday = new Date(person.birthday);
+    const eventDate = new Date(targetDate);
+
+    if (Number.isNaN(birthday.getTime()) || Number.isNaN(eventDate.getTime())) {
+      return null;
+    }
+
+    return eventDate.getFullYear() - birthday.getFullYear();
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-brand-cream flex items-center justify-center">
       <motion.div 
@@ -378,6 +391,7 @@ export default function App() {
                       .slice(0, 4)
                       .map(occasion => {
                         const person = people.find(p => p.id === occasion.personId);
+                        const turningAge = occasion.type === 'birthday' ? getTurningAge(person, occasion.date) : null;
                         return (
                           <div key={occasion.id} className="luxury-card p-6 flex items-center justify-between group">
                             <div className="flex items-center gap-4">
@@ -386,7 +400,10 @@ export default function App() {
                               </div>
                               <div>
                                 <p className="font-bold text-brand-deep-purple">{occasion.title}</p>
-                                <p className="text-sm text-purple-300">For {person?.name} • {new Date(occasion.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                                <p className="text-sm text-purple-300">
+                                  For {person?.name} • {new Date(occasion.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                                  {turningAge ? ` • turning ${turningAge}` : ''}
+                                </p>
                               </div>
                             </div>
                             <button 
@@ -684,6 +701,7 @@ export default function App() {
                     .map(occasion => {
                       const person = people.find(p => p.id === occasion.personId);
                       const isUpcoming = new Date(occasion.date) >= new Date();
+                      const turningAge = occasion.type === 'birthday' ? getTurningAge(person, occasion.date) : null;
                       return (
                         <div key={occasion.id} className={`luxury-card p-8 flex items-center justify-between ${!isUpcoming ? 'opacity-50 grayscale' : ''}`}>
                           <div className="flex items-center gap-6">
@@ -698,6 +716,7 @@ export default function App() {
                               <h3 className="text-xl font-bold text-brand-slate mb-1">{occasion.title}</h3>
                               <p className="text-sm text-stone-400 font-light">
                                 {person?.name} • {new Date(occasion.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                {turningAge ? ` • turning ${turningAge}` : ''}
                               </p>
                             </div>
                           </div>
@@ -759,7 +778,17 @@ export default function App() {
                         <div key={person.id} className="p-4 bg-pink-50 rounded-2xl border border-pink-100 flex items-center justify-between">
                           <div>
                             <p className="font-bold text-purple-900">{person.name}</p>
-                            <p className="text-xs text-pink-500 font-medium">{person.birthday}</p>
+                            <p className="text-xs text-pink-500 font-medium">
+                              {person.birthday}
+                              {(() => {
+                                const nextBirthday = new Date(person.birthday!);
+                                const today = new Date();
+                                nextBirthday.setFullYear(today.getFullYear());
+                                if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                                const turningAge = getTurningAge(person, nextBirthday.toISOString().split('T')[0]);
+                                return turningAge ? ` • turning ${turningAge}` : '';
+                              })()}
+                            </p>
                           </div>
                           <button 
                             onClick={() => {
