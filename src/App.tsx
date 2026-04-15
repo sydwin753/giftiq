@@ -105,8 +105,10 @@ export default function App() {
   const [cardNotes, setCardNotes] = useState<CardNote[]>([]);
   const [activeTab, setActiveTab] = useState<'people' | 'history' | 'ideas' | 'calendar' | 'dashboard'>('dashboard');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [showAddPerson, setShowAddPerson] = useState(false);
   const [showAddGift, setShowAddGift] = useState(false);
+  const [showAddOccasion, setShowAddOccasion] = useState(false);
   const [showEmailSync, setShowEmailSync] = useState(false);
   const [showReceiptScanner, setShowReceiptScanner] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -683,7 +685,7 @@ export default function App() {
                   <h2 className="text-4xl font-serif mb-2">Occasions</h2>
                   <p className="text-stone-400 font-light">Birthdays sync automatically from each profile, plus any manual occasions you add later.</p>
                 </div>
-                <button className="luxury-button-gold">
+                <button onClick={() => setShowAddOccasion(true)} className="luxury-button-gold">
                   <Plus className="w-5 h-5" />
                   Add Occasion
                 </button>
@@ -1020,9 +1022,20 @@ export default function App() {
               gifts={gifts.filter(g => g.personId === selectedPerson.id)}
               ideas={ideas.filter(i => i.personId === selectedPerson.id)}
               onClose={() => setSelectedPerson(null)}
+              onEdit={(person) => setEditingPerson(person)}
               onShowRecs={(p) => setShowRecommendations(p)}
               onShowThankYou={(p, g) => setShowThankYou({ person: p, gift: g })}
               onShowGiftTag={(p, g) => setShowGiftTag({ person: p, gift: g })}
+            />
+          </Modal>
+        )}
+
+        {editingPerson && (
+          <Modal onClose={() => setEditingPerson(null)} title="Edit Profile">
+            <AddPersonForm
+              onClose={() => setEditingPerson(null)}
+              userId={user.uid}
+              existingPerson={editingPerson}
             />
           </Modal>
         )}
@@ -1034,6 +1047,16 @@ export default function App() {
               gifts={gifts}
               onClose={() => setShowAddGift(false)}
               userId={user.uid}
+            />
+          </Modal>
+        )}
+
+        {showAddOccasion && (
+          <Modal onClose={() => setShowAddOccasion(false)} title="Add Occasion">
+            <AddOccasionForm
+              people={people}
+              userId={user.uid}
+              onClose={() => setShowAddOccasion(false)}
             />
           </Modal>
         )}
@@ -1135,16 +1158,24 @@ function Modal({ children, onClose, title }: { children: React.ReactNode, onClos
   );
 }
 
-function AddPersonForm({ onClose, userId }: { onClose: () => void, userId: string }) {
-  const [name, setName] = useState('');
-  const [relationship, setRelationship] = useState('');
-  const [birthday, setBirthday] = useState('');
-  const [budget, setBudget] = useState('');
-  const [bio, setBio] = useState('');
-  const [interests, setInterests] = useState<string[]>([]);
-  const [dislikes, setDislikes] = useState<string[]>([]);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [sizes, setSizes] = useState<Record<string, string>>({});
+function AddPersonForm({
+  onClose,
+  userId,
+  existingPerson
+}: {
+  onClose: () => void,
+  userId: string,
+  existingPerson?: Person | null
+}) {
+  const [name, setName] = useState(existingPerson?.name || '');
+  const [relationship, setRelationship] = useState(existingPerson?.relationship || '');
+  const [birthday, setBirthday] = useState(existingPerson?.birthday || '');
+  const [budget, setBudget] = useState(existingPerson?.budget ? String(existingPerson.budget) : '');
+  const [bio, setBio] = useState(existingPerson?.bio || '');
+  const [interests, setInterests] = useState<string[]>(existingPerson?.interests || []);
+  const [dislikes, setDislikes] = useState<string[]>(existingPerson?.dislikes || []);
+  const [brands, setBrands] = useState<string[]>(existingPerson?.favoriteBrands || []);
+  const [sizes, setSizes] = useState<Record<string, string>>(existingPerson?.sizes || {});
   const [extracting, setExtracting] = useState(false);
 
   const handleExtract = async () => {
@@ -1165,7 +1196,7 @@ function AddPersonForm({ onClose, userId }: { onClose: () => void, userId: strin
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDoc(collection(db, 'people'), {
+    const payload = {
       name,
       relationship,
       birthday,
@@ -1176,8 +1207,17 @@ function AddPersonForm({ onClose, userId }: { onClose: () => void, userId: strin
       favoriteBrands: brands,
       sizes,
       ownerId: userId,
-      createdAt: serverTimestamp()
-    });
+      updatedAt: serverTimestamp()
+    };
+
+    if (existingPerson?.id) {
+      await updateDoc(doc(db, 'people', existingPerson.id), payload);
+    } else {
+      await addDoc(collection(db, 'people'), {
+        ...payload,
+        createdAt: serverTimestamp()
+      });
+    }
     onClose();
   };
 
@@ -1263,13 +1303,31 @@ function AddPersonForm({ onClose, userId }: { onClose: () => void, userId: strin
       )}
 
       <button type="submit" className="luxury-button-gold w-full py-5 text-sm">
-        Create Profile
+        {existingPerson ? 'Save Profile Changes' : 'Create Profile'}
       </button>
     </form>
   );
 }
 
-function PersonDetail({ person, gifts, ideas, onClose, onShowRecs, onShowThankYou, onShowGiftTag }: { person: Person, gifts: Gift[], ideas: Idea[], onClose: () => void, onShowRecs: (p: Person) => void, onShowThankYou: (p: Person, g: Gift) => void, onShowGiftTag: (p: Person, g: Gift) => void }) {
+function PersonDetail({
+  person,
+  gifts,
+  ideas,
+  onClose,
+  onEdit,
+  onShowRecs,
+  onShowThankYou,
+  onShowGiftTag
+}: {
+  person: Person,
+  gifts: Gift[],
+  ideas: Idea[],
+  onClose: () => void,
+  onEdit: (p: Person) => void,
+  onShowRecs: (p: Person) => void,
+  onShowThankYou: (p: Person, g: Gift) => void,
+  onShowGiftTag: (p: Person, g: Gift) => void
+}) {
   const spent = gifts.reduce((acc, g) => acc + (g.cost || 0), 0);
   const budget = person.budget || 0;
   const percent = budget > 0 ? (spent / budget) * 100 : 0;
@@ -1283,12 +1341,20 @@ function PersonDetail({ person, gifts, ideas, onClose, onShowRecs, onShowThankYo
         <div className="flex-1">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-3xl font-serif text-brand-slate">{person.name}</h3>
-            <button 
-              onClick={() => deleteDoc(doc(db, 'people', person.id)).then(onClose)}
-              className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
-            >
-              <Trash2 className="w-5 h-5 text-stone-300" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onEdit(person)}
+                className="px-4 py-2 rounded-xl border border-stone-100 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors"
+              >
+                Edit
+              </button>
+              <button 
+                onClick={() => deleteDoc(doc(db, 'people', person.id)).then(onClose)}
+                className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
+              >
+                <Trash2 className="w-5 h-5 text-stone-300" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold uppercase tracking-widest text-brand-luxury-gold bg-brand-rose/50 px-4 py-1.5 rounded-full">
@@ -1574,6 +1640,105 @@ function AddGiftForm({ people, gifts, onClose, userId }: { people: Person[], gif
 
       <button type="submit" className="luxury-button-gold w-full py-5 text-sm">
         Record Gift
+      </button>
+    </form>
+  );
+}
+
+function AddOccasionForm({
+  people,
+  userId,
+  onClose
+}: {
+  people: Person[],
+  userId: string,
+  onClose: () => void
+}) {
+  const [personId, setPersonId] = useState('');
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState('');
+  const [type, setType] = useState<Occasion['type']>('other');
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    await addDoc(collection(db, 'occasions'), {
+      personId,
+      title,
+      date,
+      type,
+      ownerId: userId,
+      createdAt: serverTimestamp()
+    });
+
+    onClose();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-brand-luxury-gold">Person</label>
+          <select
+            required
+            value={personId}
+            onChange={(event) => setPersonId(event.target.value)}
+            className="luxury-input"
+          >
+            <option value="">Select person...</option>
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>{person.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-brand-luxury-gold">Occasion title</label>
+          <input
+            required
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Example: Graduation dinner"
+            className="luxury-input"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-brand-luxury-gold">Date</label>
+            <input
+              required
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="luxury-input"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-brand-luxury-gold">Type</label>
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value as Occasion['type'])}
+              className="luxury-input"
+            >
+              <option value="other">Other</option>
+              <option value="anniversary">Anniversary</option>
+              <option value="holiday">Holiday</option>
+              <option value="birthday">Birthday</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+        <p className="text-sm leading-6 text-stone-500">
+          Birthday occasions already sync automatically from each person profile. Use manual occasions here for everything else, or only add a birthday manually if you want a separate one-time birthday event.
+        </p>
+      </div>
+
+      <button type="submit" className="luxury-button-gold w-full py-5 text-sm">
+        Save Occasion
       </button>
     </form>
   );
