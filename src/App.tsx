@@ -2102,8 +2102,12 @@ function CardDraft({
   onClose: () => void
 }) {
   const [note, setNote] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(occasionValue !== 'Birthday');
   const [saving, setSaving] = useState(false);
+  const [favoriteMemory, setFavoriteMemory] = useState('');
+  const [admireMost, setAdmireMost] = useState('');
+  const [thisYearMoment, setThisYearMoment] = useState('');
+  const [toneDirection, setToneDirection] = useState('');
 
   const recentNotes = [...noteHistory]
     .sort((a, b) => {
@@ -2122,18 +2126,35 @@ function CardDraft({
   );
   const featuredPreviousNote = matchingOccasionNotes[0] || recentNotes[0];
 
+  const generateDraft = async () => {
+    setLoading(true);
+    const personalContext = [
+      favoriteMemory ? `Favorite memory together: ${favoriteMemory}` : '',
+      admireMost ? `What I admire most about them: ${admireMost}` : '',
+      thisYearMoment ? `Something from this past year worth mentioning: ${thisYearMoment}` : '',
+      toneDirection ? `Tone to aim for: ${toneDirection}` : ''
+    ].filter(Boolean).join('\n');
+
+    try {
+      const generated = await generateCardNote(
+        person.name,
+        person.relationship,
+        occasionLabel,
+        subject,
+        recentNotes.map((entry) => entry.content),
+        person.notes,
+        personalContext
+      );
+      setNote(generated);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    generateCardNote(
-      person.name,
-      person.relationship,
-      occasionLabel,
-      subject,
-      recentNotes.map((entry) => entry.content),
-      person.notes
-    )
-      .then(setNote)
-      .finally(() => setLoading(false));
-  }, [occasionLabel, person.name, person.notes, person.relationship, subject]);
+    if (occasionValue === 'Birthday') return;
+    generateDraft();
+  }, [occasionLabel, occasionValue, person.name, person.notes, person.relationship, subject]);
 
   const handleCopyAndSave = async () => {
     setSaving(true);
@@ -2163,6 +2184,46 @@ function CardDraft({
 
   return (
     <div className="grid gap-6">
+      {occasionValue === 'Birthday' && !note && !loading && (
+        <div className="grid gap-4">
+          <div className="rounded-3xl border border-pink-100 bg-pink-50 p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-pink-400 mb-2">Make it more personal</p>
+            <p className="text-sm leading-6 text-stone-600">
+              Answer a few quick prompts and Giftiq will turn them into a more heartfelt birthday card that also avoids repeating last year.
+            </p>
+          </div>
+          <textarea
+            value={favoriteMemory}
+            onChange={(e) => setFavoriteMemory(e.target.value)}
+            placeholder={`Favorite memory with ${person.name}`}
+            className="luxury-input min-h-[96px] resize-none"
+          />
+          <textarea
+            value={admireMost}
+            onChange={(e) => setAdmireMost(e.target.value)}
+            placeholder={`What do you admire most about ${person.name}?`}
+            className="luxury-input min-h-[96px] resize-none"
+          />
+          <textarea
+            value={thisYearMoment}
+            onChange={(e) => setThisYearMoment(e.target.value)}
+            placeholder="Something from this past year you want to mention"
+            className="luxury-input min-h-[96px] resize-none"
+          />
+          <input
+            value={toneDirection}
+            onChange={(e) => setToneDirection(e.target.value)}
+            placeholder="Tone: sweet, funny, proud, sentimental, playful..."
+            className="luxury-input"
+          />
+          <button
+            onClick={generateDraft}
+            className="w-full py-4 bg-pink-500 text-white rounded-2xl font-bold hover:bg-pink-600 shadow-lg shadow-pink-100"
+          >
+            Write Heartfelt Birthday Card
+          </button>
+        </div>
+      )}
       {person.notes && (
         <div className="rounded-3xl border border-stone-200 bg-white p-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400 mb-2">Saved card-writing guidance</p>
@@ -2177,16 +2238,29 @@ function CardDraft({
           <p className="text-sm leading-6 text-stone-600 italic">{featuredPreviousNote.content}</p>
         </div>
       )}
-      <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl text-blue-900 leading-relaxed whitespace-pre-wrap italic">
-        {note}
-      </div>
-      <button 
-        onClick={handleCopyAndSave}
-        disabled={saving}
-        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-70"
-      >
-        {saving ? 'Saving note...' : 'Copy and Save to Card History'}
-      </button>
+      {note && occasionValue === 'Birthday' && (
+        <button
+          onClick={generateDraft}
+          disabled={loading}
+          className="w-full py-3 border border-stone-200 text-stone-600 rounded-2xl font-medium hover:bg-stone-50 disabled:opacity-70"
+        >
+          {loading ? 'Refreshing draft...' : 'Rewrite with these answers'}
+        </button>
+      )}
+      {note && (
+        <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl text-blue-900 leading-relaxed whitespace-pre-wrap italic">
+          {note}
+        </div>
+      )}
+      {note && (
+        <button 
+          onClick={handleCopyAndSave}
+          disabled={saving}
+          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-70"
+        >
+          {saving ? 'Saving note...' : 'Copy and Save to Card History'}
+        </button>
+      )}
     </div>
   );
 }

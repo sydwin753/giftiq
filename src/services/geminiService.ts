@@ -394,15 +394,18 @@ export async function generateCardNote(
   occasionLabel: string,
   subject: string,
   previousNotes: string[] = [],
-  styleNotes?: string
+  styleNotes?: string,
+  personalContext?: string
 ) {
   const ai = getAI();
   const model = "gemini-3-flash-preview";
   const prompt = `Generate a warm, personalized ${occasionLabel.toLowerCase()} card note for ${personName}. Our relationship is ${relationship}.
   The card is for: ${subject}.
   
-  Keep it heartfelt, specific, and concise enough to fit naturally in a card.
+  Keep it heartfelt, specific, emotionally sincere, and concise enough to fit naturally in a card.
+  Lead with warmth and make it sound like it came from someone who truly knows this person.
   ${styleNotes ? `Personal card-writing guidance for this person: ${styleNotes}` : 'No extra card-writing guidance is available.'}
+  ${personalContext ? `Use these personal details and memories in the note when they fit naturally: ${personalContext}` : 'No extra personal memory answers were provided.'}
   Do not repeat wording, structure, or standout phrases from these previous notes to the same person:
   ${previousNotes.length > 0 ? previousNotes.map((note, index) => `${index + 1}. ${note}`).join('\n') : 'No previous notes available.'}
   
