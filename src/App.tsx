@@ -1697,12 +1697,20 @@ function EmailSync({ people, userId, onClose }: { people: Person[], userId: stri
 function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Person, pastGifts: Gift[], onClose: () => void, userId: string }) {
   const [recs, setRecs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getGiftRecommendations(person, pastGifts, person.budget)
-      .then(setRecs)
+      .then((results) => {
+        setRecs(results);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error('Recommendation generation failed:', err);
+        setError('Giftiq could not generate recommendations right now. Please try again in a moment.');
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [pastGifts, person, person.budget]);
 
   const handleSave = async (rec: any) => {
     await addDoc(collection(db, 'ideas'), {
@@ -1725,6 +1733,19 @@ function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Per
     </div>
   );
 
+  if (error) {
+    return (
+      <div className="grid gap-6">
+        <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-sm leading-6">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4">
       {recs.map((rec, i) => (
@@ -1733,7 +1754,17 @@ function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Per
             <h4 className="font-bold text-purple-900">{rec.itemName}</h4>
             <span className="text-sm font-bold text-purple-500">${rec.price}</span>
           </div>
-          <p className="text-sm text-purple-400 mb-4">{rec.description}</p>
+          <p className="text-sm text-purple-400 mb-3">{rec.description}</p>
+          <div className="mb-4 grid gap-3">
+            <div className="rounded-2xl bg-pink-50 border border-pink-100 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-pink-400 mb-1">Why this works for a {person.relationship}</p>
+              <p className="text-sm text-pink-700 leading-6">{rec.relationshipFit || rec.explanation}</p>
+            </div>
+            <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 mb-1">Recommendation logic</p>
+              <p className="text-sm text-stone-600 leading-6">{rec.explanation}</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <a 
               href={rec.buyLink} 
@@ -1744,6 +1775,17 @@ function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Per
               <LinkIcon className="w-4 h-4" />
               View Item
             </a>
+            {rec.searchQuery && (
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(rec.searchQuery)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-white text-purple-600 rounded-xl text-center text-sm font-bold border border-purple-100 flex items-center justify-center gap-2"
+              >
+                <Search className="w-4 h-4" />
+                Search
+              </a>
+            )}
             <button 
               onClick={() => handleSave(rec)}
               className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700"

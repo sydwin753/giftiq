@@ -50,37 +50,127 @@ export async function scanEmailsForGifts(emails: string[]) {
 
 export async function getGiftRecommendations(personProfile: any, pastGifts: any[], budget?: number) {
   const ai = getAI();
-  const model = "gemini-3.1-pro-preview";
-  const prompt = `Suggest 5 personalized gift ideas for this person:
-    Profile: ${JSON.stringify(personProfile)}
-    Past Gifts: ${JSON.stringify(pastGifts)}
-    Budget: ${budget ? `$${budget}` : 'Any'}
-    
-    For each idea, provide a name, description, estimated price, a search link, and a short explanation of why this gift fits the person based on their profile.`;
+  const relationship = personProfile?.relationship || 'important person';
+  const interestList = (personProfile?.interests || []).join(', ') || 'not specified';
+  const dislikeList = (personProfile?.dislikes || []).join(', ') || 'none listed';
+  const brandList = (personProfile?.favoriteBrands || []).join(', ') || 'none listed';
+  const pastGiftList = pastGifts.length
+    ? pastGifts
+        .slice(-8)
+        .map((gift) => `${gift.itemName}${gift.occasion ? ` for ${gift.occasion}` : ''}${gift.cost ? ` ($${gift.cost})` : ''}`)
+        .join('; ')
+    : 'No past gifts recorded.';
+  const maxBudget = budget && budget > 0 ? budget : undefined;
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            itemName: { type: Type.STRING },
-            description: { type: Type.STRING },
-            price: { type: Type.NUMBER },
-            buyLink: { type: Type.STRING },
-            explanation: { type: Type.STRING }
-          },
-          required: ["itemName", "description", "price", "buyLink", "explanation"]
+  const prompt = `You are a premium gift strategist who is allowed to use Google Search grounding.
+Generate 5 highly specific gift recommendations for this person.
+
+Relationship context: ${relationship}
+Name: ${personProfile?.name || 'Unknown'}
+Bio / profile: ${personProfile?.bio || 'No bio provided.'}
+Interests: ${interestList}
+Dislikes: ${dislikeList}
+Favorite brands: ${brandList}
+Budget ceiling: ${maxBudget ? `$${maxBudget}` : 'Flexible, but avoid unnecessary splurges'}
+Past gifts already given: ${pastGiftList}
+
+Instructions:
+- Relationship fit matters most. The gifts should feel right for a ${relationship}, not just any person.
+- Use web knowledge to ground suggestions in real, current gift categories, trends, and product directions.
+- Avoid recommending the same type of gift repeatedly if it overlaps too much with past gifts.
+- Favor giftable ideas that are practical to purchase online in the United States.
+- Keep descriptions concrete and helpful, not vague.
+- If budget is provided, keep each recommendation at or under budget.
+- Provide search-friendly buying links or shopping-search links rather than making up fake product pages.
+
+Return valid JSON only as an array of 5 objects with this exact shape:
+[
+  {
+    "itemName": "string",
+    "description": "string",
+    "price": 0,
+    "buyLink": "string",
+    "explanation": "string",
+    "relationshipFit": "string",
+    "searchQuery": "string"
+  }
+]`;
+
+  const normalizeRecommendations = (rawRecommendations: any[]) =>
+    rawRecommendations.map((recommendation) => {
+      const searchQuery =
+        recommendation.searchQuery ||
+        `${recommendation.itemName} gift for ${relationship}`;
+
+      return {
+        itemName: recommendation.itemName,
+        description: recommendation.description,
+        price: typeof recommendation.price === 'number' ? recommendation.price : 0,
+        buyLink:
+          recommendation.buyLink ||
+          `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+        explanation: recommendation.explanation,
+        relationshipFit:
+          recommendation.relationshipFit ||
+          `Chosen to feel personal for a ${relationship}.`,
+        searchQuery
+      };
+    });
+
+  const parseJsonArray = (text: string) => {
+    const trimmed = text.trim();
+    const start = trimmed.indexOf('[');
+    const end = trimmed.lastIndexOf(']');
+    if (start === -1 || end === -1) {
+      throw new Error('Recommendation response did not contain a JSON array.');
+    }
+    return JSON.parse(trimmed.slice(start, end + 1));
+  };
+
+  try {
+    const interaction = await ai.interactions.create({
+      model: 'gemini-2.5-flash',
+      input: prompt,
+      tools: [{ type: 'google_search' }],
+      response_mime_type: 'application/json'
+    });
+
+    const textOutput =
+      interaction.outputs
+        ?.filter((output: any) => output.type === 'text')
+        .map((output: any) => output.text || '')
+        .join('\n') || '';
+
+    return normalizeRecommendations(parseJsonArray(textOutput));
+  } catch (groundedError) {
+    console.error('Grounded recommendations failed, falling back to standard generation:', groundedError);
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              itemName: { type: Type.STRING },
+              description: { type: Type.STRING },
+              price: { type: Type.NUMBER },
+              buyLink: { type: Type.STRING },
+              explanation: { type: Type.STRING },
+              relationshipFit: { type: Type.STRING },
+              searchQuery: { type: Type.STRING }
+            },
+            required: ["itemName", "description", "price", "buyLink", "explanation", "relationshipFit", "searchQuery"]
+          }
         }
       }
-    }
-  });
+    });
 
-  return JSON.parse(response.text);
+    return normalizeRecommendations(JSON.parse(response.text));
+  }
 }
 
 export async function extractInterestsFromBio(bio: string) {
