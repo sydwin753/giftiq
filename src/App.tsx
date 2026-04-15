@@ -95,6 +95,36 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
+function parseDateOnly(value?: string | null) {
+  if (!value) return null;
+
+  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day), 12);
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function formatDateOnly(value?: string | null, options?: Intl.DateTimeFormatOptions) {
+  const parsed = parseDateOnly(value);
+  if (!parsed) return '';
+  return parsed.toLocaleDateString('en-US', options);
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -205,7 +235,8 @@ export default function App() {
   const syncedBirthdayOccasions: Occasion[] = people
     .filter((person) => person.birthday)
     .map((person) => {
-      const birthdayDate = new Date(person.birthday!);
+      const birthdayDate = parseDateOnly(person.birthday);
+      if (!birthdayDate) return null;
       const now = new Date();
       const nextBirthday = new Date(now.getFullYear(), birthdayDate.getMonth(), birthdayDate.getDate());
       if (nextBirthday < now) {
@@ -216,11 +247,12 @@ export default function App() {
         id: `birthday-${person.id}`,
         personId: person.id,
         title: `${person.name}'s Birthday`,
-        date: nextBirthday.toISOString().split('T')[0],
+        date: toDateInputValue(nextBirthday),
         type: 'birthday',
         ownerId: person.ownerId
       };
-    });
+    })
+    .filter(Boolean) as Occasion[];
 
   const mergedOccasions = [
     ...occasions.filter((occasion) => !(occasion.type === 'birthday' && people.some((person) => person.id === occasion.personId && person.birthday))),
@@ -230,10 +262,10 @@ export default function App() {
   const getTurningAge = (person?: Person, targetDate?: string) => {
     if (!person?.birthday || !targetDate) return null;
 
-    const birthday = new Date(person.birthday);
-    const eventDate = new Date(targetDate);
+    const birthday = parseDateOnly(person.birthday);
+    const eventDate = parseDateOnly(targetDate);
 
-    if (Number.isNaN(birthday.getTime()) || Number.isNaN(eventDate.getTime())) {
+    if (!birthday || !eventDate) {
       return null;
     }
 
@@ -337,9 +369,9 @@ export default function App() {
                 <div>
                   <h2 className="text-4xl font-serif mb-2 text-brand-deep-purple">Welcome back, {user.displayName?.split(' ')[0]}</h2>
                   <p className="text-stone-400 font-light">You have {mergedOccasions.filter(o => {
-                    const d = new Date(o.date);
+                    const d = parseDateOnly(o.date);
                     const now = new Date();
-                    return d.getMonth() === now.getMonth();
+                    return d?.getMonth() === now.getMonth();
                   }).length} occasions this month.</p>
                 </div>
                 <div className="flex gap-3">
@@ -388,8 +420,8 @@ export default function App() {
                   </div>
                   <div className="space-y-4">
                     {mergedOccasions
-                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                      .filter(o => new Date(o.date) >= new Date())
+                      .sort((a, b) => (parseDateOnly(a.date)?.getTime() || 0) - (parseDateOnly(b.date)?.getTime() || 0))
+                      .filter(o => (parseDateOnly(o.date)?.getTime() || 0) >= new Date().getTime())
                       .slice(0, 4)
                       .map(occasion => {
                         const person = people.find(p => p.id === occasion.personId);
@@ -403,7 +435,7 @@ export default function App() {
                               <div>
                                 <p className="font-bold text-brand-deep-purple">{occasion.title}</p>
                                 <p className="text-sm text-purple-300">
-                                  For {person?.name} • {new Date(occasion.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                                  For {person?.name} • {formatDateOnly(occasion.date, { month: 'long', day: 'numeric' })}
                                   {turningAge ? ` • turning ${turningAge}` : ''}
                                 </p>
                               </div>
@@ -645,7 +677,7 @@ export default function App() {
                                 await addDoc(collection(db, 'gifts'), {
                                   personId: idea.personId,
                                   itemName: idea.itemName,
-                                  date: new Date().toISOString().split('T')[0],
+                                  date: toDateInputValue(new Date()),
                                   cost: idea.price,
                                   ownerId: user.uid,
                                   source: 'idea'
@@ -699,10 +731,10 @@ export default function App() {
                   </div>
                 ) : (
                   mergedOccasions
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .sort((a, b) => (parseDateOnly(a.date)?.getTime() || 0) - (parseDateOnly(b.date)?.getTime() || 0))
                     .map(occasion => {
                       const person = people.find(p => p.id === occasion.personId);
-                      const isUpcoming = new Date(occasion.date) >= new Date();
+                      const isUpcoming = (parseDateOnly(occasion.date)?.getTime() || 0) >= new Date().getTime();
                       const turningAge = occasion.type === 'birthday' ? getTurningAge(person, occasion.date) : null;
                       return (
                         <div key={occasion.id} className={`luxury-card p-8 flex items-center justify-between ${!isUpcoming ? 'opacity-50 grayscale' : ''}`}>
@@ -713,16 +745,16 @@ export default function App() {
                               'bg-blue-50 text-brand-deep-blue'
                             }`}>
                               <span className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">
-                                {new Date(occasion.date).toLocaleDateString('en-US', { month: 'short' })}
+                                {formatDateOnly(occasion.date, { month: 'short' })}
                               </span>
                               <span className="text-2xl font-serif leading-none">
-                                {new Date(occasion.date).getDate()}
+                                {parseDateOnly(occasion.date)?.getDate()}
                               </span>
                             </div>
                             <div>
                               <h3 className="text-xl font-bold text-brand-slate mb-1">{occasion.title}</h3>
                               <p className="text-sm text-stone-400 font-light">
-                                {person?.name} • {new Date(occasion.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                {person?.name} • {formatDateOnly(occasion.date, { month: 'long', day: 'numeric', year: 'numeric' })}
                                 {turningAge ? ` • turning ${turningAge}` : ''}
                               </p>
                             </div>
@@ -772,10 +804,10 @@ export default function App() {
                       .filter(p => p.birthday)
                       .sort((a, b) => {
                         const today = new Date();
-                        const nextA = new Date(a.birthday!);
+                        const nextA = parseDateOnly(a.birthday!) || new Date(a.birthday!);
                         nextA.setFullYear(today.getFullYear());
                         if (nextA < today) nextA.setFullYear(today.getFullYear() + 1);
-                        const nextB = new Date(b.birthday!);
+                        const nextB = parseDateOnly(b.birthday!) || new Date(b.birthday!);
                         nextB.setFullYear(today.getFullYear());
                         if (nextB < today) nextB.setFullYear(today.getFullYear() + 1);
                         return nextA.getTime() - nextB.getTime();
@@ -786,13 +818,13 @@ export default function App() {
                           <div>
                             <p className="font-bold text-purple-900">{person.name}</p>
                             <p className="text-xs text-pink-500 font-medium">
-                              {person.birthday}
+                              {formatDateOnly(person.birthday, { month: 'long', day: 'numeric' })}
                               {(() => {
-                                const nextBirthday = new Date(person.birthday!);
+                                const nextBirthday = parseDateOnly(person.birthday!) || new Date(person.birthday!);
                                 const today = new Date();
                                 nextBirthday.setFullYear(today.getFullYear());
                                 if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                                const turningAge = getTurningAge(person, nextBirthday.toISOString().split('T')[0]);
+                                const turningAge = getTurningAge(person, toDateInputValue(nextBirthday));
                                 return turningAge ? ` • turning ${turningAge}` : '';
                               })()}
                             </p>
@@ -951,7 +983,7 @@ export default function App() {
                               await addDoc(collection(db, 'gifts'), {
                                 personId: idea.personId,
                                 itemName: idea.itemName,
-                                date: new Date().toISOString().split('T')[0],
+                                date: toDateInputValue(new Date()),
                                 ownerId: user.uid
                               });
                             }}
@@ -1367,7 +1399,7 @@ function PersonDetail({
             </span>
             {person.birthday && (
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                Born {new Date(person.birthday).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                Born {formatDateOnly(person.birthday, { month: 'long', day: 'numeric' })}
               </span>
             )}
           </div>
@@ -1506,7 +1538,7 @@ function PersonDetail({
 function AddGiftForm({ people, gifts, onClose, userId }: { people: Person[], gifts: Gift[], onClose: () => void, userId: string }) {
   const [personId, setPersonId] = useState('');
   const [itemName, setItemName] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(toDateInputValue(new Date()));
   const [cost, setCost] = useState('');
   const [occasion, setOccasion] = useState('');
   const [store, setStore] = useState('');
@@ -1807,7 +1839,7 @@ function EmailSync({ people, userId, onClose }: { people: Person[], userId: stri
       await addDoc(collection(db, 'gifts'), {
         personId: gift.targetPersonId,
         itemName: gift.itemName,
-        date: gift.date || new Date().toISOString().split('T')[0],
+        date: gift.date || toDateInputValue(new Date()),
         cost: gift.cost,
         source: gift.retailer,
         ownerId: userId,
@@ -2121,7 +2153,7 @@ function ReceiptScanner({ people, userId, onClose }: { people: Person[], userId:
         personId,
         itemName: item.itemName,
         cost: item.price,
-        date: new Date().toISOString().split('T')[0],
+        date: toDateInputValue(new Date()),
         ownerId: userId,
         createdAt: serverTimestamp()
       });
