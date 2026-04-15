@@ -134,10 +134,21 @@ export async function detectGiftConflicts(newItemName: string, pastGifts: any[])
   return JSON.parse(response.text);
 }
 
-export async function generateThankYouNote(personName: string, giftName: string, relationship: string) {
+export async function generateThankYouNote(
+  personName: string,
+  giftName: string,
+  relationship: string,
+  previousNotes: string[] = []
+) {
   const ai = getAI();
   const model = "gemini-3-flash-preview";
-  const prompt = `Generate a warm, personalized thank-you note for ${personName} who gave me a ${giftName}. Our relationship is: ${relationship}.`;
+  const prompt = `Generate a warm, personalized card note for ${personName} about ${giftName}. Our relationship is ${relationship}.
+  
+  Keep it heartfelt, specific, and concise enough to fit naturally in a card.
+  Do not repeat wording, structure, or standout phrases from these previous notes to the same person:
+  ${previousNotes.length > 0 ? previousNotes.map((note, index) => `${index + 1}. ${note}`).join('\n') : 'No previous notes available.'}
+  
+  Return only the card note text.`;
 
   const response = await ai.models.generateContent({
     model,

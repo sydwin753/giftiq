@@ -58,3 +58,13 @@ export interface Idea {
   status: 'pending' | 'purchased' | 'dismissed';
   ownerId: string;
 }
+
+export interface CardNote {
+  id: string;
+  personId: string;
+  giftId?: string;
+  content: string;
+  occasion?: string;
+  ownerId: string;
+  createdAt?: unknown;
+}

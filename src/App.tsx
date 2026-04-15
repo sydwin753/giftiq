@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, completeRedirectSignIn, db, getFriendlyAuthError, logOut, signIn } from './firebase';
-import { Person, Gift, Idea, Occasion } from './types';
+import { CardNote, Person, Gift, Idea, Occasion } from './types';
 import confetti from 'canvas-confetti';
 import { 
   Gift as GiftIcon, 
@@ -102,6 +102,7 @@ export default function App() {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [cardNotes, setCardNotes] = useState<CardNote[]>([]);
   const [activeTab, setActiveTab] = useState<'people' | 'history' | 'ideas' | 'calendar' | 'dashboard'>('dashboard');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -185,13 +186,44 @@ export default function App() {
       setOccasions(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Occasion)));
     });
 
+    const qCardNotes = query(collection(db, 'cardNotes'), where('ownerId', '==', user.uid));
+    const unsubCardNotes = onSnapshot(qCardNotes, (snapshot) => {
+      setCardNotes(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as CardNote)));
+    });
+
     return () => {
       unsubPeople();
       unsubGifts();
       unsubIdeas();
       unsubOccasions();
+      unsubCardNotes();
     };
   }, [user]);
+
+  const syncedBirthdayOccasions: Occasion[] = people
+    .filter((person) => person.birthday)
+    .map((person) => {
+      const birthdayDate = new Date(person.birthday!);
+      const now = new Date();
+      const nextBirthday = new Date(now.getFullYear(), birthdayDate.getMonth(), birthdayDate.getDate());
+      if (nextBirthday < now) {
+        nextBirthday.setFullYear(now.getFullYear() + 1);
+      }
+
+      return {
+        id: `birthday-${person.id}`,
+        personId: person.id,
+        title: `${person.name}'s Birthday`,
+        date: nextBirthday.toISOString().split('T')[0],
+        type: 'birthday',
+        ownerId: person.ownerId
+      };
+    });
+
+  const mergedOccasions = [
+    ...occasions.filter((occasion) => !(occasion.type === 'birthday' && people.some((person) => person.id === occasion.personId && person.birthday))),
+    ...syncedBirthdayOccasions
+  ];
 
   if (loading) return (
     <div className="min-h-screen bg-brand-cream flex items-center justify-center">
@@ -289,7 +321,7 @@ export default function App() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <h2 className="text-4xl font-serif mb-2 text-brand-deep-purple">Welcome back, {user.displayName?.split(' ')[0]}</h2>
-                  <p className="text-stone-400 font-light">You have {occasions.filter(o => {
+                  <p className="text-stone-400 font-light">You have {mergedOccasions.filter(o => {
                     const d = new Date(o.date);
                     const now = new Date();
                     return d.getMonth() === now.getMonth();
@@ -340,7 +372,7 @@ export default function App() {
                     <button onClick={() => setActiveTab('calendar')} className="text-xs font-bold text-brand-luxury-gold uppercase tracking-widest hover:underline">View Calendar</button>
                   </div>
                   <div className="space-y-4">
-                    {occasions
+                    {mergedOccasions
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .filter(o => new Date(o.date) >= new Date())
                       .slice(0, 4)
@@ -366,7 +398,7 @@ export default function App() {
                           </div>
                         );
                       })}
-                    {occasions.length === 0 && (
+                    {mergedOccasions.length === 0 && (
                       <div className="p-12 text-center bg-stone-50 rounded-[32px] border border-dashed border-stone-200">
                         <p className="text-stone-400 font-light">No upcoming occasions tracked.</p>
                       </div>
@@ -632,7 +664,7 @@ export default function App() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-4xl font-serif mb-2">Occasions</h2>
-                  <p className="text-stone-400 font-light">Never miss a moment that matters.</p>
+                  <p className="text-stone-400 font-light">Birthdays sync automatically from each profile, plus any manual occasions you add later.</p>
                 </div>
                 <button className="luxury-button-gold">
                   <Plus className="w-5 h-5" />
@@ -641,13 +673,13 @@ export default function App() {
               </div>
 
               <div className="grid gap-6">
-                {occasions.length === 0 ? (
+                {mergedOccasions.length === 0 ? (
                   <div className="text-center py-24 bg-stone-50 rounded-[40px] border border-dashed border-stone-200">
                     <Calendar className="w-16 h-16 text-stone-200 mx-auto mb-6" />
                     <p className="text-stone-400 text-lg font-light">Your calendar is waiting for memories.</p>
                   </div>
                 ) : (
-                  occasions
+                  mergedOccasions
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map(occasion => {
                       const person = people.find(p => p.id === occasion.personId);
@@ -1003,6 +1035,8 @@ export default function App() {
             <ThankYouDraft 
               person={showThankYou.person}
               gift={showThankYou.gift}
+              noteHistory={cardNotes.filter((note) => note.personId === showThankYou.person.id)}
+              userId={user.uid}
               onClose={() => setShowThankYou(null)}
             />
           </Modal>
@@ -1723,15 +1757,66 @@ function AIRecommendations({ person, pastGifts, onClose, userId }: { person: Per
   );
 }
 
-function ThankYouDraft({ person, gift, onClose }: { person: Person, gift: Gift, onClose: () => void }) {
+function ThankYouDraft({
+  person,
+  gift,
+  noteHistory,
+  userId,
+  onClose
+}: {
+  person: Person,
+  gift: Gift,
+  noteHistory: CardNote[],
+  userId: string,
+  onClose: () => void
+}) {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const recentNotes = [...noteHistory]
+    .sort((a, b) => {
+      const aTime = typeof a.createdAt === 'object' && a.createdAt && 'seconds' in (a.createdAt as Record<string, unknown>)
+        ? Number((a.createdAt as { seconds: number }).seconds)
+        : 0;
+      const bTime = typeof b.createdAt === 'object' && b.createdAt && 'seconds' in (b.createdAt as Record<string, unknown>)
+        ? Number((b.createdAt as { seconds: number }).seconds)
+        : 0;
+      return bTime - aTime;
+    })
+    .slice(0, 3);
 
   useEffect(() => {
-    generateThankYouNote(person.name, gift.itemName, person.relationship)
+    generateThankYouNote(
+      person.name,
+      gift.itemName,
+      person.relationship,
+      recentNotes.map((entry) => entry.content)
+    )
       .then(setNote)
       .finally(() => setLoading(false));
-  }, []);
+  }, [gift.itemName, person.name, person.relationship]);
+
+  const handleCopyAndSave = async () => {
+    setSaving(true);
+    try {
+      await navigator.clipboard.writeText(note);
+      const latestNote = recentNotes[0];
+      if (!latestNote || latestNote.content !== note || latestNote.giftId !== gift.id) {
+        await addDoc(collection(db, 'cardNotes'), {
+          personId: person.id,
+          giftId: gift.id,
+          content: note,
+          occasion: gift.occasion || 'General',
+          ownerId: userId,
+          createdAt: serverTimestamp()
+        });
+      }
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-12 gap-4">
@@ -1742,17 +1827,21 @@ function ThankYouDraft({ person, gift, onClose }: { person: Person, gift: Gift, 
 
   return (
     <div className="grid gap-6">
+      {recentNotes.length > 0 && (
+        <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400 mb-2">Last card note to {person.name}</p>
+          <p className="text-sm leading-6 text-stone-600 italic">{recentNotes[0].content}</p>
+        </div>
+      )}
       <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl text-blue-900 leading-relaxed whitespace-pre-wrap italic">
         {note}
       </div>
       <button 
-        onClick={() => {
-          navigator.clipboard.writeText(note);
-          onClose();
-        }}
-        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100"
+        onClick={handleCopyAndSave}
+        disabled={saving}
+        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-70"
       >
-        Copy to Clipboard
+        {saving ? 'Saving note...' : 'Copy and Save to Card History'}
       </button>
     </div>
   );
